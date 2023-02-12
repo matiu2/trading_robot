@@ -1,0 +1,19 @@
+[package]
+name = "oanda"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+error-stack = "0.3.1"
+log = "0.4.17"
+parse-display = "0.8.0"
+reqwest = { version = "0.11.14", features = ["rustls-tls", "json", "gzip", "stream"] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
+thiserror = "1.0.38"
+tokio = { version = "1.25.0", features = ["tokio-macros", "macros"] }
+
+[dev-dependencies]
+pretty_env_logger = "0.4.0"
