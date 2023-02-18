@@ -24,6 +24,7 @@ impl Accounts<'_> {
             .into_report()
             .attach_printable_lazy(|| format!("url path: {path}"))
     }
+    pub async fn list_instruments(&self, account_id: &str) -> Vec<model::Instrument> {}
 }
 
 mod model {
@@ -40,6 +41,60 @@ mod model {
     pub struct Account {
         pub id: String,
         pub tags: Vec<String>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct InstrumentRaw {
+        pub display_name: String,
+        pub display_precision: i32,
+        pub margin_rate: String,
+        pub maximum_order_units: String,
+        pub maximum_position_size: String,
+        pub maximum_trailing_stop_distance: String,
+        pub minimum_trade_size: String,
+        pub minimum_trailing_stop_distance: String,
+        pub name: String,
+        pub pip_location: i32,
+        pub r#type: String,
+        pub trade_units_precision: i32,
+    }
+
+    #[derive(Debug)]
+    pub struct Instrument {
+        pub display_name: String,
+        pub display_precision: i32,
+        pub margin_rate: f32,
+        pub maximum_order_units: u32,
+        pub maximum_position_size: u32,
+        pub maximum_trailing_stop_distance: f32,
+        pub minimum_trade_size: u32,
+        pub minimum_trailing_stop_distance: f32,
+        pub name: String,
+        pub pip_location: i32,
+        pub r#type: String,
+        pub trade_units_precision: i32,
+    }
+
+    impl TryFrom<InstrumentRaw> for Instrument {
+        type Error = Box<dyn std::error::Error>;
+
+        fn try_from(value: InstrumentRaw) -> Result<Self, Self::Error> {
+            Ok(Instrument {
+                display_name: value.display_name,
+                display_precision: value.display_precision,
+                margin_rate: value.margin_rate.parse()?,
+                maximum_order_units: value.maximum_order_units.parse()?,
+                maximum_position_size: value.maximum_position_size.parse()?,
+                maximum_trailing_stop_distance: value.maximum_trailing_stop_distance.parse()?,
+                minimum_trade_size: value.minimum_trade_size.parse()?,
+                minimum_trailing_stop_distance: value.minimum_trailing_stop_distance.parse()?,
+                name: value.name,
+                pip_location: value.pip_location,
+                r#type: value.r#type,
+                trade_units_precision: value.trade_units_precision,
+            })
+        }
     }
 }
 
