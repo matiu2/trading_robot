@@ -2,13 +2,13 @@ use serde::Deserialize;
 
 use serde_with::{serde_as, DisplayFromStr};
 
-/// See https://developer.oanda.com/rest-live-v20/account-ep/
+/// See <https://developer.oanda.com/rest-live-v20/account-ep/>
 #[derive(Debug, Deserialize)]
 pub struct Accounts {
     pub accounts: Vec<Account>,
 }
 
-/// See https://developer.oanda.com/rest-live-v20/account-ep/
+/// See <https://developer.oanda.com/rest-live-v20/account-ep/>
 #[derive(Debug, Deserialize)]
 pub struct Account {
     pub id: String,
