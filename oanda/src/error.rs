@@ -1,3 +1,5 @@
+use std::num::{ParseFloatError, ParseIntError};
+
 use reqwest::StatusCode;
 
 #[derive(thiserror::Error, Debug)]
@@ -18,4 +20,8 @@ pub enum Error {
         err: serde_json::Error,
         input: String,
     },
+    #[error("int conversion")]
+    IntConversion(#[from] ParseIntError),
+    #[error("float conversion")]
+    FloatConversion(#[from] ParseFloatError),
 }

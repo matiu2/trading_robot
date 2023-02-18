@@ -1,6 +1,9 @@
 pub mod account;
 
+use std::borrow::ToOwned;
+
 use error_stack::{report, IntoReport, ResultExt};
+use serde::de::DeserializeOwned;
 
 use crate::{error::Error, host::Host};
 
@@ -26,7 +29,7 @@ impl Client {
         }
     }
     /// Makes an authenticated get request to a path in the rest api
-    pub async fn get(&self, path: &str) -> error_stack::Result<String, Error> {
+    pub async fn get<T: DeserializeOwned>(&self, path: &str) -> error_stack::Result<T, Error> {
         let url = self.host.rest_url(path);
 
         let response = self
@@ -41,13 +44,20 @@ impl Client {
 
         let status = response.status();
         if status.is_success() {
-            response
+            let body: String = response
                 .text()
                 .await
                 .map_err(Error::from)
                 .into_report()
                 .attach_printable_lazy(|| format!("URL: {url}"))
-                .attach_printable_lazy(|| format!("HTTP status code: {status}"))
+                .attach_printable_lazy(|| format!("HTTP status code: {status}"))?;
+            serde_json::from_str(&body)
+                .map_err(|err| Error::JsonParse {
+                    err,
+                    input: body.to_owned(),
+                })
+                .into_report()
+                .attach_printable_lazy(|| format!("url path: {path}"))
         } else {
             // If we get a bad http status
             // try to get and add the body for more context
