@@ -1,13 +1,16 @@
 pub mod account;
+pub mod instrument;
 
 use std::borrow::ToOwned;
 
 use error_stack::{report, IntoReport, ResultExt};
+use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 
 use crate::{error::Error, host::Host};
 
 use self::account::Accounts;
+use self::instrument::Instrument;
 
 pub struct Client {
     token: String,
@@ -28,15 +31,28 @@ impl Client {
             rest_client,
         }
     }
+    /// Given a URL path, inserts the part before it
+    pub fn url(&self, path: &str) -> String {
+        self.host.rest_url(path)
+    }
+    /// Given a URL path, creates a Get request builder with the correct
+    /// host and authentication token
+    pub fn start_get(&self, url: &str) -> RequestBuilder {
+        self.rest_client
+            .get(url)
+            .header("Authorization", format!("Bearer {}", &self.token))
+    }
     /// Makes an authenticated get request to a path in the rest api
-    pub async fn get<T: DeserializeOwned>(&self, path: &str) -> error_stack::Result<T, Error> {
-        let url = self.host.rest_url(path);
+    pub async fn get<T: DeserializeOwned>(
+        &self,
+        request: RequestBuilder,
+    ) -> error_stack::Result<T, Error> {
+        let request = request.build().map_err(Error::from).into_report()?;
+        let url = request.url().to_owned();
 
         let response = self
             .rest_client
-            .get(&url)
-            .header("Authorization", format!("Bearer {}", &self.token))
-            .send()
+            .execute(request)
             .await
             .map_err(Error::from)
             .into_report()
@@ -57,7 +73,7 @@ impl Client {
                     input: body.to_owned(),
                 })
                 .into_report()
-                .attach_printable_lazy(|| format!("url path: {path}"))
+                .attach_printable_lazy(|| format!("url: {url}"))
         } else {
             // If we get a bad http status
             // try to get and add the body for more context
@@ -76,5 +92,13 @@ impl Client {
     /// Rest API for anything account related
     pub fn accounts(&self) -> Accounts {
         Accounts { client: self }
+    }
+
+    /// Rest API for anything instrument related
+    pub fn instrument(&self, instrument: impl ToString) -> Instrument {
+        Instrument {
+            client: self,
+            instrument: instrument.to_string(),
+        }
     }
 }

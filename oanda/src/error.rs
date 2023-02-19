@@ -24,4 +24,6 @@ pub enum Error {
     IntConversion(#[from] ParseIntError),
     #[error("float conversion")]
     FloatConversion(#[from] ParseFloatError),
+    #[error("Other")]
+    Other,
 }

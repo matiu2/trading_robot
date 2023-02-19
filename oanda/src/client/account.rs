@@ -1,8 +1,8 @@
 use error_stack::{Result, ResultExt};
 
+pub use crate::model;
+
 use crate::{client::Client, error::Error};
-pub use model::Account;
-mod model;
 
 pub struct Accounts<'a> {
     pub(crate) client: &'a Client,
@@ -14,10 +14,11 @@ impl Accounts<'_> {
     /// # Errors
     ///
     /// This function will return an error if the http request fails or the Json deseralization fails
-    pub async fn list(&self) -> Result<Vec<Account>, Error> {
-        let path = "/v3/accounts";
+    pub async fn list(&self) -> Result<Vec<model::Account>, Error> {
+        let url = self.client.url("/v3/accounts");
+        let request = self.client.start_get(&url);
         self.client
-            .get(path)
+            .get(request)
             .await
             .map(|accounts: model::Accounts| accounts.accounts)
             .attach_printable("While listing accounts")
@@ -37,8 +38,10 @@ impl Accounts<'_> {
         account_id: &str,
     ) -> Result<Vec<model::Instrument>, Error> {
         let path = format!("/v3/accounts/{account_id}/instruments");
+        let url = self.client.url(&path);
+        let request = self.client.start_get(&url);
         self.client
-            .get(&path)
+            .get(request)
             .await
             .map(|instruments: model::Instruments| instruments.instruments)
             .attach_printable_lazy(|| {
