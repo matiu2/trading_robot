@@ -23,6 +23,7 @@ impl<'a> Instrument<'a> {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CandleStickRequest<'a> {
     /// Name of the Instrument [required]
     #[serde(skip)]
@@ -97,7 +98,7 @@ impl<'a> CandleStickRequest<'a> {
     pub async fn send(&self) -> Result<model::candle::CandleResponse, Error> {
         let path = format!("/v3/instruments/{}/candles", self.instruments.instrument);
         let url = self.instruments.client.url(&path);
-        let request = self.instruments.client.start_get(&url).query(self);
+        let request = dbg!(self.instruments.client.start_get(&url).query(self));
         self.instruments
             .client
             .get(request)
@@ -143,9 +144,10 @@ impl<'a> fmt::Debug for CandleStickRequest<'a> {
 
 #[cfg(test)]
 mod test {
+    use chrono::{TimeZone, Utc};
     use std::env::var;
 
-    use crate::client::Client;
+    use crate::{client::Client, model::candle::CandlestickGranularity};
 
     #[tokio::test]
     async fn candles() {
@@ -155,6 +157,52 @@ mod test {
         let eur_usd = client.instrument("EUR_USD");
         let request = eur_usd.candles();
         let candles = request.send().await.unwrap();
+        dbg!(candles);
+    }
+
+    #[tokio::test]
+    async fn candles_count() {
+        let api_key =
+            var("OANDA_TOKEN").expect("expected OANDA_TOKEN environment variable to be set");
+        let client = Client::new(api_key, crate::host::Host::Dev);
+        let eur_usd = client.instrument("EUR_USD");
+        let request = eur_usd
+            .candles()
+            .count(5)
+            .granularity(CandlestickGranularity::H1);
+        let candles = request.send().await.unwrap();
+        assert_eq!(candles.candles.len(), 5);
+        assert_eq!(candles.granularity, CandlestickGranularity::H1);
+    }
+
+    #[tokio::test]
+    async fn candles_date_range() {
+        let api_key =
+            var("OANDA_TOKEN").expect("expected OANDA_TOKEN environment variable to be set");
+        let client = Client::new(api_key, crate::host::Host::Dev);
+        let eur_usd = client.instrument("EUR_USD");
+        let start_date = Utc.with_ymd_and_hms(2022, 2, 14, 0, 0, 0).single().unwrap();
+        let end_date = Utc.with_ymd_and_hms(2022, 2, 19, 0, 0, 0).single().unwrap();
+        let request = eur_usd
+            .candles()
+            .granularity(CandlestickGranularity::D)
+            .from(start_date)
+            .alignment_timezone("UTC")
+            .daily_alignment(01)
+            .include_first(false)
+            .to(end_date);
+        let candles = request.send().await.unwrap();
+        dbg!(&candles);
+        assert_eq!(candles.candles.len(), 5);
+        assert_eq!(candles.granularity, CandlestickGranularity::D);
+        for candle in &candles.candles {
+            assert!(
+                candle.time > start_date,
+                "Candle: {:?} - {start_date}",
+                candle
+            );
+            assert!(candle.time <= end_date, "Candle: {:?} - {end_date}", candle);
+        }
         dbg!(candles);
     }
 }

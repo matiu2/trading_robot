@@ -70,7 +70,7 @@ pub struct CandlestickData {
     pub c: f32,
 }
 
-#[derive(Display, FromStr, Debug, Serialize, Deserialize)]
+#[derive(Display, FromStr, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[display(style = "UPPERCASE")]
 pub enum CandlestickGranularity {
     /// 5 second candlesticks, minute alignment
