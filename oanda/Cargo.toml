@@ -9,6 +9,7 @@ edition = "2021"
 chrono = { version = "0.4.23", features = ["alloc", "serde", "pure-rust-locales"] }
 deref-derive = "0.1.0"
 error-stack = "0.3.1"
+lazy_static = "1.4.0"
 log = "0.4.17"
 parse-display = "0.8.0"
 reqwest = { version = "0.11.14", features = ["rustls-tls", "json", "gzip", "stream"] }

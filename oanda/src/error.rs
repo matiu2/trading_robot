@@ -11,7 +11,7 @@ pub enum Error {
     //     value: String,
     //     err: Box<dyn std::error::Error>,
     // },
-    #[error("https error")]
+    #[error("https error: {0}")]
     Request(#[from] reqwest::Error),
     #[error("https status code error: {0}")]
     Status(StatusCode),
@@ -20,9 +20,9 @@ pub enum Error {
         err: serde_json::Error,
         input: String,
     },
-    #[error("int conversion")]
+    #[error("int conversion: {0}")]
     IntConversion(#[from] ParseIntError),
-    #[error("float conversion")]
+    #[error("float conversion: {0}")]
     FloatConversion(#[from] ParseFloatError),
     #[error("Other")]
     Other,

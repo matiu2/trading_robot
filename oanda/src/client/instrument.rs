@@ -1,5 +1,5 @@
 pub use crate::model;
-use crate::{client::Client, error::Error};
+use crate::{builder_methods, client::Client, error::Error};
 use chrono::{DateTime, Utc};
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
@@ -69,17 +69,6 @@ pub struct CandleStickRequest<'a> {
     weekly_alignment: Option<DayOfWeek>,
 }
 
-macro_rules! builder_methods {
-    ([$($field:ident : $field_type:ty),* $(,)?]) => {
-        $(
-            pub fn $field(mut self, $field: $field_type) -> Self {
-                self.$field = Some($field);
-                self
-            }
-        )*
-    };
-}
-
 impl<'a> CandleStickRequest<'a> {
     builder_methods!([
         accept_datetime_format: DateTimeFormat,
@@ -98,7 +87,7 @@ impl<'a> CandleStickRequest<'a> {
     pub async fn send(&self) -> Result<model::candle::CandleResponse, Error> {
         let path = format!("/v3/instruments/{}/candles", self.instruments.instrument);
         let url = self.instruments.client.url(&path);
-        let request = dbg!(self.instruments.client.start_get(&url).query(self));
+        let request = self.instruments.client.start_get(&url).query(self);
         self.instruments
             .client
             .get(request)
