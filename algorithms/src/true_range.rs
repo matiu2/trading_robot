@@ -4,7 +4,7 @@
 use std::ops::Deref;
 
 /// Impl this trait for your data to get an TR iterator for it
-trait TRCandle {
+pub trait TRCandle {
     fn high(&self) -> f32;
     fn low(&self) -> f32;
     fn close(&self) -> f32;
@@ -41,40 +41,32 @@ where
 }
 
 /// Turn an Iterator of TRCandle into an Iterator of the actual true range values
-trait TrueRange<I, C>
+pub trait TrueRange<I>
 where
-    I: Iterator<Item = C>,
-    C: TRCandle,
+    I: IntoIterator,
+    I::Item: TRCandle,
 {
     /// Take an iterator of `TRCandle` and get an iterator of the actual TR values.
-    fn true_range(self) -> TRIter<I, C>;
+    fn true_range(self) -> TRIter<I::IntoIter>;
 }
 
 /// The underlying struct that enables our Iterator
-struct TRIter<I, C>
-where
-    I: Iterator<Item = C>,
-    C: TRCandle,
-{
+pub struct TRIter<I> {
     iter: I,
     previous_close: Option<f32>,
 }
 
-impl<I, C> TrueRange<I, C> for I
+impl<I> TrueRange<I> for I
 where
-    I: Iterator<Item = C>,
-    C: TRCandle,
+    I: IntoIterator,
+    I::Item: TRCandle,
 {
-    fn true_range(self) -> TRIter<I, C> {
-        TRIter::new(self)
+    fn true_range(self) -> TRIter<I::IntoIter> {
+        TRIter::new(self.into_iter())
     }
 }
 
-impl<I, C> TRIter<I, C>
-where
-    I: Iterator<Item = C>,
-    C: TRCandle,
-{
+impl<I> TRIter<I> {
     fn new(iter: I) -> Self {
         Self {
             iter,
@@ -83,7 +75,7 @@ where
     }
 }
 
-impl<I, C> Iterator for TRIter<I, C>
+impl<I, C> Iterator for TRIter<I>
 where
     I: Iterator<Item = C>,
     C: TRCandle,
