@@ -10,3 +10,4 @@
    3.5. Tradee entry and exit
 4. Be able to get account balance info
 5. Be able to trade with stoplosses
+6. Close trades
