@@ -129,9 +129,9 @@ where
                         ),
                     };
                 }
-                // We previously reached the target, get a new one
+                // Sequential candles are the same, get a new target candle
                 (Some(_next_open), Some(_target)) => {
-                    self.target = self.next_level();
+                    self.target = Some(self.next_level()?);
                 }
             }
         })

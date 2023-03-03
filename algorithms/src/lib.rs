@@ -1,6 +1,5 @@
-#![feature(generators, generator_trait)]
-
 mod atr;
+mod higher_high_lower_low;
 mod renko;
 mod true_range;
 
