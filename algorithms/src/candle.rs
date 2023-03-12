@@ -70,7 +70,7 @@ where
 pub mod test_data {
     use super::{Close, High, Low, Open};
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Default, Debug, PartialEq, Clone)]
     pub struct Candle {
         pub high: f32,
         pub low: f32,

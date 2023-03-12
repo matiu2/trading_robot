@@ -80,38 +80,20 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::candle::{Close, High, Low};
+    use crate::candle::test_data::Candle;
+    use deref_derive::Deref;
 
     use super::{TRCandle, TrueRange};
     use rand::Rng;
 
-    #[derive(Debug, Clone)]
-    struct Candle {
-        high: f32,
-        low: f32,
-        close: f32,
+    #[derive(Deref, Debug, Clone)]
+    struct CandleWithTR {
+        #[deref]
+        candle: Candle,
         tr: Option<f32>,
     }
 
-    impl High for Candle {
-        fn high(&self) -> f32 {
-            self.high
-        }
-    }
-
-    impl Low for Candle {
-        fn low(&self) -> f32 {
-            self.low
-        }
-    }
-
-    impl Close for Candle {
-        fn close(&self) -> f32 {
-            self.close
-        }
-    }
-
-    fn generate_candles(n: usize) -> Vec<Candle> {
+    fn generate_candles(n: usize) -> Vec<CandleWithTR> {
         let mut rng = rand::thread_rng();
         let mut prev_close = rng.gen_range(1.0..100.0);
 
@@ -129,10 +111,13 @@ mod test {
                 .fold(0.0, |a: f32, &b| a.max(b)),
             );
             prev_close = close;
-            Candle {
-                high,
-                low,
-                close,
+            CandleWithTR {
+                candle: Candle {
+                    high,
+                    low,
+                    close,
+                    ..Default::default()
+                },
                 tr,
             }
         })
@@ -177,22 +162,31 @@ mod test {
     #[test]
     fn test_true_range_same_values() {
         let candles = vec![
-            Candle {
-                high: 10.0,
-                low: 10.0,
-                close: 10.0,
+            CandleWithTR {
+                candle: Candle {
+                    high: 10.0,
+                    low: 10.0,
+                    close: 10.0,
+                    ..Default::default()
+                },
                 tr: None,
             },
-            Candle {
-                high: 10.0,
-                low: 10.0,
-                close: 10.0,
+            CandleWithTR {
+                candle: Candle {
+                    high: 10.0,
+                    low: 10.0,
+                    close: 10.0,
+                    ..Default::default()
+                },
                 tr: Some(0.0),
             },
-            Candle {
-                high: 10.0,
-                low: 10.0,
-                close: 10.0,
+            CandleWithTR {
+                candle: Candle {
+                    high: 10.0,
+                    low: 10.0,
+                    close: 10.0,
+                    ..Default::default()
+                },
                 tr: Some(0.0),
             },
         ];
@@ -219,10 +213,13 @@ mod test {
     #[test]
     fn test_single_candle() {
         // Test that a single candle with no previous close has a true range of None.
-        let candles = vec![Candle {
-            high: 10.0,
-            low: 5.0,
-            close: 8.0,
+        let candles = vec![CandleWithTR {
+            candle: Candle {
+                high: 10.0,
+                low: 5.0,
+                close: 8.0,
+                ..Default::default()
+            },
             tr: None,
         }];
         let mut iter = candles.iter().true_range();
@@ -234,16 +231,22 @@ mod test {
         // Test that when two consecutive candles return a single value
         // because the first candle is consumed
         let candles = vec![
-            Candle {
-                high: 20.0,
-                low: 10.0,
-                close: 15.0,
+            CandleWithTR {
+                candle: Candle {
+                    high: 20.0,
+                    low: 10.0,
+                    close: 15.0,
+                    ..Default::default()
+                },
                 tr: None,
             },
-            Candle {
-                high: 18.0,
-                low: 13.0,
-                close: 15.0,
+            CandleWithTR {
+                candle: Candle {
+                    high: 18.0,
+                    low: 13.0,
+                    close: 15.0,
+                    ..Default::default()
+                },
                 tr: Some(0.0), // hl=5;hc=3;lc=2
             },
         ];
@@ -256,10 +259,13 @@ mod test {
     fn test_same_values() {
         // Test that calling true_range() on an iterator where all candles have the same high, low,
         // and close values returns an iterator with all values equal to zero.
-        let candle = Candle {
-            high: 10.0,
-            low: 10.0,
-            close: 10.0,
+        let candle = CandleWithTR {
+            candle: Candle {
+                high: 10.0,
+                low: 10.0,
+                close: 10.0,
+                ..Default::default()
+            },
             tr: None,
         };
         let candles = std::iter::repeat(candle).take(5);
