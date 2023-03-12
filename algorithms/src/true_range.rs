@@ -14,8 +14,7 @@ pub trait TRCandle: High + Low + Close {
         // The absolute value of the difference between the previous day's close and the current day's low.
         let lpc = (self.low() - previous_close).abs();
         // The True Range is calculated as the greatest of these values.
-        dbg!(self.close(), previous_close, hl, hpc, lpc);
-        dbg!(hl.max(hpc).max(lpc))
+        hl.max(hpc).max(lpc)
     }
 }
 

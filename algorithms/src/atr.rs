@@ -37,31 +37,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::candle::test_data::{test_data_1, test_data_2, test_data_3, Candle};
     use crate::candle::{Close, High, Low};
-
-    struct Candle {
-        high: f32,
-        low: f32,
-        close: f32,
-    }
-
-    impl High for Candle {
-        fn high(&self) -> f32 {
-            self.high
-        }
-    }
-
-    impl Low for Candle {
-        fn low(&self) -> f32 {
-            self.low
-        }
-    }
-
-    impl Close for Candle {
-        fn close(&self) -> f32 {
-            self.close
-        }
-    }
 
     #[test]
     fn test_average_non_empty() {
@@ -76,36 +53,33 @@ mod tests {
     }
 
     #[test]
-    fn test_atr_non_empty() {
-        let candles = vec![
-            Candle {
-                high: 20.0,
-                low: 10.0,
-                close: 12.0,
-            },
-            Candle {
-                high: 32.0,
-                low: 15.0,
-                close: 28.0,
-            },
-            Candle {
-                high: 44.0,
-                low: 36.0,
-                close: 40.0,
-            },
-            Candle {
-                high: 51.0,
-                low: 43.0,
-                close: 45.0,
-            },
-            Candle {
-                high: 62.0,
-                low: 58.0,
-                close: 60.0,
-            },
-        ];
-        dbg!(candles.iter().true_range().collect::<Vec<f32>>());
-        assert_eq!(candles.into_iter().atr(), Some(16.0));
+    fn test_atr_1() {
+        let candles = test_data_1();
+        assert_eq!(
+            candles.iter().true_range().collect::<Vec<f32>>(),
+            [6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0]
+        );
+        assert_eq!(candles.into_iter().atr(), Some(4.875));
+    }
+
+    #[test]
+    fn test_atr_2() {
+        let candles = test_data_2();
+        assert_eq!(
+            candles.iter().true_range().collect::<Vec<f32>>(),
+            [7.0, 6.0, 10.0, 8.0, 7.0, 7.0, 7.0, 7.0, 12.0]
+        );
+        assert_eq!(candles.into_iter().atr(), Some(7.888889));
+    }
+
+    #[test]
+    fn test_atr_3() {
+        let candles = test_data_3();
+        assert_eq!(
+            candles.iter().true_range().collect::<Vec<f32>>(),
+            [4.0, 3.0, 4.0, 3.0, 4.0, 3.0, 4.0, 4.0, 4.0, 3.0, 4.0]
+        );
+        assert_eq!(candles.into_iter().atr(), Some(3.6363636363636362));
     }
 
     #[test]
