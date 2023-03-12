@@ -37,6 +37,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::candle::{Close, High, Low};
 
     struct Candle {
         high: f32,
@@ -44,15 +45,19 @@ mod tests {
         close: f32,
     }
 
-    impl TRCandle for Candle {
+    impl High for Candle {
         fn high(&self) -> f32 {
             self.high
         }
+    }
 
+    impl Low for Candle {
         fn low(&self) -> f32 {
             self.low
         }
+    }
 
+    impl Close for Candle {
         fn close(&self) -> f32 {
             self.close
         }

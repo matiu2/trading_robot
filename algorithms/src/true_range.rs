@@ -1,13 +1,10 @@
 //! Turns an iterator of candles into an iterator of their true_range values.
 //! Consumes the first candle for accuracy rather than making up the first value
 
-use std::ops::Deref;
+use crate::candle::{Close, High, Low};
 
 /// Impl this trait for your data to get an TR iterator for it
-pub trait TRCandle {
-    fn high(&self) -> f32;
-    fn low(&self) -> f32;
-    fn close(&self) -> f32;
+pub trait TRCandle: High + Low + Close {
     /// Calculates the true_range from the previous close
     fn true_range(&self, previous_close: f32) -> f32 {
         // The difference between the day's high and the day's low.
@@ -22,23 +19,8 @@ pub trait TRCandle {
     }
 }
 
-impl<T, C> TRCandle for T
-where
-    T: Deref<Target = C>,
-    C: TRCandle,
-{
-    fn high(&self) -> f32 {
-        self.deref().high()
-    }
-
-    fn low(&self) -> f32 {
-        self.deref().low()
-    }
-
-    fn close(&self) -> f32 {
-        self.deref().close()
-    }
-}
+/// Implement TRCandle for everything that has a high, low, and close
+impl<T: High + Low + Close> TRCandle for T {}
 
 /// Turn an Iterator of TRCandle into an Iterator of the actual true range values
 pub trait TrueRange<I>
@@ -99,6 +81,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::candle::{Close, High, Low};
+
     use super::{TRCandle, TrueRange};
     use rand::Rng;
 
@@ -110,15 +94,19 @@ mod test {
         tr: Option<f32>,
     }
 
-    impl TRCandle for Candle {
+    impl High for Candle {
         fn high(&self) -> f32 {
             self.high
         }
+    }
 
+    impl Low for Candle {
         fn low(&self) -> f32 {
             self.low
         }
+    }
 
+    impl Close for Candle {
         fn close(&self) -> f32 {
             self.close
         }

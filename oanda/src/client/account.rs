@@ -72,7 +72,7 @@ where
 impl<'a> ListInstrumentsRequest<'a> {
     pub fn add_instrument(mut self, instrument: impl ToString) -> Self {
         self.instruments
-            .get_or_insert_with(|| Vec::new())
+            .get_or_insert_with(Vec::new)
             .push(instrument.to_string());
         self
     }
@@ -80,7 +80,7 @@ impl<'a> ListInstrumentsRequest<'a> {
         mut self,
         instruments: impl IntoIterator<Item = T>,
     ) -> Self {
-        self.instruments.get_or_insert_with(|| Vec::new()).extend(
+        self.instruments.get_or_insert_with(Vec::new).extend(
             instruments
                 .into_iter()
                 .map(|instrument| instrument.to_string()),
