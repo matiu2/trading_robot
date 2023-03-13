@@ -66,13 +66,10 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let previous_close = self.previous_close;
-            if let Some(candle) = self.iter.next() {
-                self.previous_close = Some(candle.close());
-                if let Some(previous_close) = previous_close {
-                    break Some(candle.true_range(previous_close));
-                }
-            } else {
-                break None;
+            let candle = self.iter.next()?;
+            self.previous_close = Some(candle.close());
+            if let Some(previous_close) = previous_close {
+                break Some(candle.true_range(previous_close));
             }
         }
     }
@@ -80,10 +77,12 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::candle::test_data::Candle;
+    use crate::candle::test_data::{test_data_1, Candle};
     use deref_derive::Deref;
+    use itertools::Itertools;
+    use pretty_assertions::assert_eq;
 
-    use super::{TRCandle, TrueRange};
+    use super::TrueRange;
     use rand::Rng;
 
     #[derive(Deref, Debug, Clone)]
@@ -273,5 +272,22 @@ mod test {
         for tr in iter.by_ref().take(3) {
             assert_eq!(tr, 0.0);
         }
+    }
+
+    #[test]
+    fn test_1() {
+        let candles = test_data_1();
+        let expected_tr = vec![6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0];
+        let candles: Vec<CandleWithTR> = candles
+            .into_iter()
+            .zip(std::iter::once(None).chain(expected_tr.iter().map(|&n| Some(n))))
+            .map(|(candle, tr)| CandleWithTR { candle, tr })
+            .collect();
+        let got = candles
+            .iter()
+            .map(|candle| &candle.candle)
+            .true_range()
+            .collect_vec();
+        assert_eq!(expected_tr, got);
     }
 }

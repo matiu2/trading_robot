@@ -114,16 +114,20 @@ pub mod test_data {
     }
 
     pub fn test_data_1() -> Vec<Candle> {
+        // hl means the absolute difference between the high and the low
+        // hpc is the absolute difference between the high and the previous close
+        // lpc is the absolute difference between the low and the previous close
+        // tr is the true range, which is the greatest of the above values
         vec![
-            Candle::new(10.0, 5.0, 8.0, 7.0),
-            Candle::new(12.0, 6.0, 9.0, 8.0),
-            Candle::new(8.0, 4.0, 7.0, 6.0),
-            Candle::new(9.0, 5.0, 8.0, 7.0),
-            Candle::new(11.0, 6.0, 9.0, 8.0),
-            Candle::new(7.0, 3.0, 6.0, 5.0),
-            Candle::new(8.0, 4.0, 7.0, 6.0),
-            Candle::new(10.0, 5.0, 8.0, 7.0),
-            Candle::new(12.0, 6.0, 9.0, 8.0),
+            Candle::new(10.0, 5.0, 8.0, 7.0), // hl=5 hpc=None lpc=None tr=None
+            Candle::new(12.0, 6.0, 9.0, 8.0), // hl=6 hpc=5 lpc=1 tr=6
+            Candle::new(8.0, 4.0, 7.0, 6.0),  // hl=4 hpc=0 lpc=2 tr=4
+            Candle::new(9.0, 5.0, 8.0, 7.0),  // hl=4 hpc=3 lpc=1 tr=4
+            Candle::new(11.0, 6.0, 9.0, 8.0), // hl=5 hpc=4 lpc=2 tr=5
+            Candle::new(7.0, 3.0, 6.0, 5.0),  // hl=5 hpc=1 lpc=2 tr=5
+            Candle::new(8.0, 4.0, 7.0, 6.0),  // hl=4 hpc=4 lpc=1 tr=4
+            Candle::new(10.0, 5.0, 8.0, 7.0), // hl=5 hpc=4 lpc=1 tr=5
+            Candle::new(12.0, 6.0, 9.0, 8.0), // hl=6 hpc=5 lpc=1 tr=6
         ]
     }
 
