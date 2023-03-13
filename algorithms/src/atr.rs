@@ -38,7 +38,6 @@ where
 mod tests {
     use super::*;
     use crate::candle::test_data::{test_data_1, test_data_2, test_data_3, Candle};
-    use crate::candle::{Close, High, Low};
 
     #[test]
     fn test_average_non_empty() {
