@@ -48,37 +48,37 @@ mod tests {
     #[test]
     fn test_average_empty() {
         let values: Vec<f32> = vec![];
-        assert_eq!(values.iter().copied().average(), None);
+        assert_eq!(None, values.iter().copied().average());
     }
 
     #[test]
     fn test_atr_1() {
         let candles = test_data_1();
         assert_eq!(
-            candles.iter().true_range().collect::<Vec<f32>>(),
-            [6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0]
+            vec![5.0, 6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0],
+            candles.iter().true_range().collect::<Vec<f32>>()
         );
-        assert_eq!(candles.into_iter().atr(), Some(4.875));
+        assert_eq!(Some(4.888889), candles.into_iter().atr());
     }
 
     #[test]
     fn test_atr_2() {
         let candles = test_data_2();
         assert_eq!(
-            candles.iter().true_range().collect::<Vec<f32>>(),
-            [7.0, 6.0, 10.0, 8.0, 7.0, 7.0, 7.0, 7.0, 12.0]
+            vec![10.0, 7.0, 6.0, 10.0, 8.0, 7.0, 7.0, 7.0, 7.0, 12.0],
+            candles.iter().true_range().collect::<Vec<f32>>()
         );
-        assert_eq!(candles.into_iter().atr(), Some(7.888889));
+        assert_eq!(Some(8.1), candles.into_iter().atr());
     }
 
     #[test]
     fn test_atr_3() {
         let candles = test_data_3();
         assert_eq!(
+            vec![4.0, 4.0, 3.0, 4.0, 3.0, 4.0, 3.0, 4.0, 4.0, 4.0, 3.0, 4.0],
             candles.iter().true_range().collect::<Vec<f32>>(),
-            [4.0, 3.0, 4.0, 3.0, 4.0, 3.0, 4.0, 4.0, 4.0, 3.0, 4.0]
         );
-        assert_eq!(candles.into_iter().atr(), Some(3.6363636363636362));
+        assert_eq!(Some(3.6666667), candles.into_iter().atr());
     }
 
     #[test]
