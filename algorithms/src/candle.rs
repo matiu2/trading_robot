@@ -119,7 +119,7 @@ pub mod test_data {
         // lpc is the absolute difference between the low and the previous close
         // tr is the true range, which is the greatest of the above values
         vec![
-            Candle::new(10.0, 5.0, 8.0, 7.0), // hl=5 hpc=None lpc=None tr=None
+            Candle::new(10.0, 5.0, 8.0, 7.0), // hl=5 hpc=None lpc=None tr=5.0
             Candle::new(12.0, 6.0, 9.0, 8.0), // hl=6 hpc=5 lpc=1 tr=6
             Candle::new(8.0, 4.0, 7.0, 6.0),  // hl=4 hpc=0 lpc=2 tr=4
             Candle::new(9.0, 5.0, 8.0, 7.0),  // hl=4 hpc=3 lpc=1 tr=4
