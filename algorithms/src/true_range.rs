@@ -64,13 +64,13 @@ where
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            let previous_close = self.previous_close;
-            let candle = self.iter.next()?;
-            self.previous_close = Some(candle.close());
-            if let Some(previous_close) = previous_close {
-                break Some(candle.true_range(previous_close));
-            }
+        let previous_close = self.previous_close;
+        let candle = self.iter.next()?;
+        self.previous_close = Some(candle.close());
+        if let Some(previous_close) = previous_close {
+            Some(candle.true_range(previous_close))
+        } else {
+            Some(candle.high() - candle.low())
         }
     }
 }
@@ -127,15 +127,10 @@ mod test {
     }
 
     #[test]
-    fn test_true_range() {
+    fn true_range() {
         let candles = generate_candles(20);
         let mut previous_close = None;
-        for (n, (candle, tr)) in candles
-            .iter()
-            .skip(1)
-            .zip(candles.iter().true_range())
-            .enumerate()
-        {
+        for (n, (candle, tr)) in candles.iter().zip(candles.iter().true_range()).enumerate() {
             assert_eq!(
                 candle.tr,
                 Some(tr),
@@ -168,7 +163,7 @@ mod test {
                     close: 10.0,
                     ..Default::default()
                 },
-                tr: None,
+                tr: Some(0.0),
             },
             CandleWithTR {
                 candle: Candle {
@@ -191,12 +186,7 @@ mod test {
         ];
 
         let mut previous_close = None;
-        for (n, (candle, tr)) in candles
-            .iter()
-            .skip(1)
-            .zip(candles.iter().true_range())
-            .enumerate()
-        {
+        for (n, (candle, tr)) in candles.iter().zip(candles.iter().true_range()).enumerate() {
             assert_eq!(
                 candle.tr,
                 Some(tr),
@@ -210,7 +200,7 @@ mod test {
     }
 
     #[test]
-    fn test_single_candle() {
+    fn single_candle() {
         // Test that a single candle with no previous close has a true range of None.
         let candles = vec![CandleWithTR {
             candle: Candle {
@@ -219,10 +209,20 @@ mod test {
                 close: 8.0,
                 ..Default::default()
             },
-            tr: None,
+            tr: Some(5.0),
         }];
-        let mut iter = candles.iter().true_range();
-        assert_eq!(iter.next(), None);
+        let mut previous_close = None;
+        for (n, (candle, tr)) in candles.iter().zip(candles.iter().true_range()).enumerate() {
+            assert_eq!(
+                candle.tr,
+                Some(tr),
+                "n: {}, pc: {:?} candle: {:?}, tr: {tr}",
+                n + 1,
+                previous_close,
+                &candle,
+            );
+            previous_close = Some(candle.close);
+        }
     }
 
     #[test]
@@ -250,8 +250,8 @@ mod test {
             },
         ];
         let mut iter = candles.iter().true_range();
+        assert_eq!(iter.next(), Some(10.0)); // tr of first candle
         assert_eq!(iter.next(), Some(5.0)); // tr of second candle
-        assert_eq!(iter.next(), None);
     }
 
     #[test]
@@ -277,7 +277,7 @@ mod test {
     #[test]
     fn test_1() {
         let candles = test_data_1();
-        let expected_tr = vec![6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0];
+        let expected_tr = vec![5.0, 6.0, 4.0, 4.0, 5.0, 5.0, 4.0, 5.0, 6.0];
         let candles: Vec<CandleWithTR> = candles
             .into_iter()
             .zip(std::iter::once(None).chain(expected_tr.iter().map(|&n| Some(n))))
