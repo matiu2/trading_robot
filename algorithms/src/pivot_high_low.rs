@@ -65,7 +65,7 @@ pub fn pivots<'a>(
 #[cfg(test)]
 mod test {
     use super::{pivots, Pivot};
-    use crate::candle::test_data::{test_data_1, test_data_2};
+    use crate::candle::test_data::{test_data_1, test_data_2, Candle};
 
     #[test]
     fn test_1_odd_number() {
@@ -137,6 +137,28 @@ mod test {
             Pivot::High(16.0),
             Pivot::NoChange,
             Pivot::Low(4.0),
+        ];
+        assert_eq!(expected, pivots.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_high_low() {
+        let data = vec![
+            Candle::new(20.0, 10.0, 15.0, 12.0),
+            Candle::new(15.0, 8.0, 12.0, 10.0),
+            Candle::new(32.0, 6.0, 9.0, 8.0),
+            Candle::new(18.0, 11.0, 14.0, 13.0),
+        ];
+
+        let pivots = pivots(data.as_slice(), 3);
+        let expected = vec![
+            Pivot::NoChange,
+            Pivot::NoChange,
+            Pivot::NoChange,
+            Pivot::HighLow {
+                high: 32.0,
+                low: 6.0,
+            },
         ];
         assert_eq!(expected, pivots.collect::<Vec<_>>());
     }
