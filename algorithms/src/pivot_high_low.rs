@@ -10,6 +10,32 @@ pub enum Pivot {
     NoChange,
 }
 
+impl Pivot {
+    /// Returns the high value of the pivot, if it exists.
+    ///
+    /// For a `Pivot::High` or `Pivot::HighLow`, this method returns the high value.
+    /// For a `Pivot::Low` or `Pivot::NoChange`, this method returns `None`.
+    pub fn high(&self) -> Option<f32> {
+        match self {
+            Pivot::High(high) => Some(*high),
+            Pivot::HighLow { high, .. } => Some(*high),
+            _ => None,
+        }
+    }
+
+    /// Returns the low value of the pivot, if it exists.
+    ///
+    /// For a `Pivot::Low` or `Pivot::HighLow`, this method returns the low value.
+    /// For a `Pivot::High` or `Pivot::NoChange`, this method returns `None`.
+    pub fn low(&self) -> Option<f32> {
+        match self {
+            Pivot::Low(low) => Some(*low),
+            Pivot::HighLow { low, .. } => Some(*low),
+            _ => None,
+        }
+    }
+}
+
 /// Finds pivot points in a slice of types implementing `High` and `Low`.
 /// A pivot is defined as a point in the slice where a certain number of
 /// candles before and after the middle candle are lower or higher than
