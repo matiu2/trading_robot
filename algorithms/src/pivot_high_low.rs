@@ -5,6 +5,8 @@ use std::fmt::Debug as Dbg;
 pub enum Pivot {
     High(f32),
     Low(f32),
+    // A tall candle that sets a new high and low at the same time
+    HighLow { high: f32, low: f32 },
     NoChange,
 }
 
@@ -25,42 +27,70 @@ pub fn pivots<'a>(
     input: &'a [impl High + Low + Dbg],
     window_size: usize,
 ) -> impl Iterator<Item = Pivot> + 'a {
-    (0..input.len()).map(move |i| {
-        // Make the output length be the same as the input
-        if i < window_size / 2 || i >= input.len() - window_size / 2 {
-            return Pivot::NoChange;
-        }
-
-        let window = &input[i - window_size / 2..i + window_size / 2 + 1];
-        let (before, after) = window.split_at(window_size / 2);
-        let mid = &after[0];
+    // TODO: Make this a compile time check
+    assert!(window_size != 0, "Can't have a zero sized sliding window");
+    // TODO: Make this an Error instead of a panic?
+    assert!(
+        window_size <= input.len(),
+        "Window size must be <= input length"
+    );
+    let mid_index = window_size / 2;
+    let start = std::iter::repeat(Pivot::NoChange).take(window_size - 1);
+    let rest = input.windows(window_size).map(move |window| {
+        let mid = &window[mid_index];
         let mid_high = mid.high();
-        let after = &after[1..];
-
-        if before.iter().all(|x| mid_high > x.high()) && after.iter().all(|x| mid_high > x.high()) {
-            Pivot::High(mid_high)
-        } else {
-            let mid_low = mid.low();
-            if before.iter().all(|x| mid_low < x.low()) && after.iter().all(|x| mid_low < x.low()) {
-                Pivot::Low(mid_low)
-            } else {
-                Pivot::NoChange
-            }
+        let mid_low = mid.low();
+        let left = window[..mid_index].iter();
+        let right = window[mid_index..].iter().skip(1);
+        // If the middle candle's high is higher than all the other candles, this is a pivot high
+        let is_high = left.clone().all(|candle| mid_high > candle.high())
+            && right.clone().all(|candle| mid_high > candle.high());
+        // If the middle candle's low is lower than all the other candles, this is a pivot low
+        let is_low = left.clone().all(|candle| mid_low < candle.low())
+            && right.clone().all(|candle| mid_low < candle.low());
+        dbg!(mid, mid_low, mid_high, is_low, is_high);
+        match (is_high, is_low) {
+            (true, true) => Pivot::HighLow {
+                high: mid_high,
+                low: mid_low,
+            },
+            (true, false) => Pivot::High(mid_high),
+            (false, true) => Pivot::Low(mid_low),
+            (false, false) => Pivot::NoChange,
         }
-    })
+    });
+    start.chain(rest)
 }
 
 #[cfg(test)]
 mod test {
     use super::{pivots, Pivot};
     use crate::candle::test_data::{test_data_1, test_data_2};
-    use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_1() {
+    fn test_1_odd_number() {
         let data = test_data_1();
         let pivots = pivots(data.as_slice(), 5);
         let expected = vec![
+            Pivot::NoChange,
+            Pivot::NoChange,
+            Pivot::NoChange,
+            Pivot::NoChange,
+            Pivot::Low(4.0),
+            Pivot::NoChange,
+            Pivot::High(11.0),
+            Pivot::Low(3.0),
+            Pivot::NoChange,
+        ];
+        assert_eq!(expected, pivots.collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_1_even_window() {
+        let data = test_data_1();
+        let pivots = pivots(data.as_slice(), 4);
+        let expected = vec![
+            Pivot::NoChange,
             Pivot::NoChange,
             Pivot::NoChange,
             Pivot::Low(4.0),
@@ -69,16 +99,17 @@ mod test {
             Pivot::Low(3.0),
             Pivot::NoChange,
             Pivot::NoChange,
-            Pivot::NoChange,
         ];
         assert_eq!(expected, pivots.collect::<Vec<_>>());
     }
 
     #[test]
-    fn test_2() {
+    fn test_2_large() {
         let data = test_data_2();
         let pivots = pivots(data.as_slice(), 5);
         let expected = vec![
+            Pivot::NoChange,
+            Pivot::NoChange,
             Pivot::NoChange,
             Pivot::NoChange,
             Pivot::NoChange,
@@ -87,17 +118,16 @@ mod test {
             Pivot::NoChange,
             Pivot::High(16.0),
             Pivot::NoChange,
-            Pivot::NoChange,
-            Pivot::NoChange,
         ];
-        assert_eq!(pivots.collect::<Vec<_>>(), expected);
+        assert_eq!(expected, pivots.collect::<Vec<_>>());
     }
 
     #[test]
-    fn test_2b() {
+    fn test_2_small() {
         let data = test_data_2();
         let pivots = pivots(data.as_slice(), 3);
         let expected = vec![
+            Pivot::NoChange,
             Pivot::NoChange,
             Pivot::NoChange,
             Pivot::Low(6.0),
@@ -107,8 +137,7 @@ mod test {
             Pivot::High(16.0),
             Pivot::NoChange,
             Pivot::Low(4.0),
-            Pivot::NoChange,
         ];
-        assert_eq!(pivots.collect::<Vec<_>>(), expected);
+        assert_eq!(expected, pivots.collect::<Vec<_>>());
     }
 }
