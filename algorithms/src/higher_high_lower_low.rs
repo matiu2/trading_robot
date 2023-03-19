@@ -242,7 +242,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_small() {
+    fn test_small_1() {
         let pivots = vec![Pivot::NoChange];
         let expected = vec![SwingStatus {
             swing_type: SwingType::Hold,
@@ -251,6 +251,28 @@ mod tests {
         }];
         let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
         assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_small_2() {
+        let pivots = vec![Pivot::High(10.0)];
+        let mut iter = SwingStatusIter::new(pivots.into_iter());
+        assert_eq!(
+            Some(SwingStatus {
+                swing_type: SwingType::Hold,
+                support: None,
+                resistance: None,
+            }),
+            iter.next()
+        );
+        assert_eq!(
+            Some(10.0),
+            iter.prev_high,
+            "It should update its internal state"
+        );
+        assert_eq!(None, iter.prev_low);
+        assert_eq!(None, iter.support);
+        assert_eq!(None, iter.resistance);
     }
 
     fn create_swing_status_iter() -> SwingStatusIter<std::iter::Empty<Pivot>> {
