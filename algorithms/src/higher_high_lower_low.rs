@@ -59,138 +59,6 @@ where
             resistance: None,
         }
     }
-
-    /// Detects and returns a `HigherHigh` if the current pivot is a new high and
-    /// higher than the previous high.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high pivot and resistance line.
-    fn hh(&mut self, current: f32) -> SwingStatus {
-        self.prev_high = Some(current);
-        self.resistance = Some(current);
-        SwingStatus {
-            swing_type: SwingType::HigherHigh,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `LowerLow` if the current pivot is a new low and
-    /// lower than the previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// low pivot and support line.
-    fn ll(&mut self, current: f32) -> SwingStatus {
-        self.prev_low = Some(current);
-        self.support = Some(current);
-        SwingStatus {
-            swing_type: SwingType::LowerLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `LowerHigh` if the current pivot is a new high but
-    /// lower than the previous high.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high pivot and support line.
-    fn lh(&mut self, current: f32) -> SwingStatus {
-        self.prev_high = Some(current);
-        self.resistance = Some(current);
-        SwingStatus {
-            swing_type: SwingType::LowerHigh,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `HigherLow` if the current pivot is a new low but
-    /// higher than the previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// low pivot and resistance line.
-    fn hl(&mut self, current: f32) -> SwingStatus {
-        self.prev_low = Some(current);
-        self.support = Some(current);
-        SwingStatus {
-            swing_type: SwingType::HigherLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `HigherHighAndLowerLow` if the current pivot is both
-    /// a new high higher than the previous high and a new low lower than the
-    /// previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high and low pivots, as well as the support and resistance lines.
-    fn hh_and_ll(&mut self, high: f32, low: f32) -> SwingStatus {
-        self.prev_high = Some(high);
-        self.prev_low = Some(low);
-        self.resistance = Some(high);
-        self.support = Some(low);
-        SwingStatus {
-            swing_type: SwingType::HigherHighAndLowerLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `HigherHighAndHigherLow` if the current pivot is both
-    /// a new high higher than the previous high and a new low higher than the
-    /// previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high and low pivots, as well as the support and resistance lines.
-    fn hh_and_hl(&mut self, high: f32, low: f32) -> SwingStatus {
-        self.prev_high = Some(high);
-        self.prev_low = Some(low);
-        self.resistance = Some(high);
-        self.support = Some(low);
-        SwingStatus {
-            swing_type: SwingType::HigherHighAndHigherLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `LowerHighAndLowerLow` if the current pivot is both
-    /// a new high lower than the previous high and a new low lower than the
-    /// previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high and low pivots, as well as the support and resistance lines.
-    fn lh_and_ll(&mut self, high: f32, low: f32) -> SwingStatus {
-        self.prev_high = Some(high);
-        self.prev_low = Some(low);
-        self.resistance = Some(high);
-        self.support = Some(low);
-        SwingStatus {
-            swing_type: SwingType::LowerHighAndLowerLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
-
-    /// Detects and returns a `LowerHighAndHigherLow` if the current pivot is both
-    /// a new high lower than the previous high and a new low higher than the
-    /// previous low.
-    ///
-    /// This also updates the internal state of the struct to track the latest
-    /// high and low pivots, as well as the support and resistance lines.
-    fn lh_and_hl(&mut self, high: f32, low: f32) -> SwingStatus {
-        self.prev_high = Some(high);
-        self.prev_low = Some(low);
-        self.resistance = Some(high);
-        self.support = Some(low);
-        SwingStatus {
-            swing_type: SwingType::LowerHighAndHigherLow,
-            support: self.support,
-            resistance: self.resistance,
-        }
-    }
 }
 
 impl<I> Iterator for SwingStatusIter<I>
@@ -201,64 +69,64 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let input = self.input.next()?;
-        let hold = Some(SwingStatus {
-            swing_type: SwingType::Hold,
-            support: self.support,
-            resistance: self.resistance,
-        });
-        match (input, &self.prev_high, &self.prev_low) {
-            // This high is higher than the previous high
-            // This sets a new resistance line
-            (Pivot::High(current), Some(prev), _) if current > *prev => Some(self.hh(current)),
-            // This low is lower than the previous low
-            // This sets a new support line
-            (Pivot::Low(current), _, Some(prev)) if current < *prev => Some(self.ll(current)),
-            // This high is lower than the previous high
-            // This creates new support line higher than the previous one
-            (Pivot::High(current), Some(_prev_high), _) => Some(self.lh(current)),
-            // This low is higher than the previous lowa
-            // This creates new resistance line lower than the previous one
-            (Pivot::Low(current), _, Some(_prev_low)) => Some(self.hl(current)),
-            // A tall candle makes a new high and low at the same time
-            (Pivot::HighLow { high, low }, Some(prev_high), Some(prev_low))
-                if high > *prev_high && low < *prev_low =>
-            {
-                Some(self.hh_and_ll(high, low))
-            }
-            (Pivot::HighLow { high, low }, Some(prev_high), Some(prev_low))
-                if high > *prev_high && low > *prev_low =>
-            {
-                Some(self.hh_and_hl(high, low))
-            }
-            (Pivot::HighLow { high, low }, Some(prev_high), Some(prev_low))
-                if high < *prev_high && low < *prev_low =>
-            {
-                Some(self.lh_and_ll(high, low))
-            }
-            (Pivot::HighLow { high, low }, Some(prev_high), Some(prev_low))
-                if high < *prev_high && low > *prev_low =>
-            {
-                Some(self.lh_and_hl(high, low))
-            }
-            (Pivot::HighLow { high, low }, Some(prev_high), Some(prev_low)) => hold,
-            (Pivot::HighLow { high, low }, _, _) => {
+
+        let high = input.high();
+        let low = input.low();
+        let prev_high = self.prev_high;
+        let prev_low = self.prev_low;
+
+        match (high, self.prev_high) {
+            (Some(high), None) => self.prev_high = Some(high),
+            (Some(high), Some(_prev)) => {
                 self.prev_high = Some(high);
+                self.resistance = Some(high);
+            }
+            _ => (),
+        };
+
+        match (low, self.prev_low) {
+            (Some(low), None) => self.prev_low = Some(low),
+            (Some(low), Some(_prev)) => {
                 self.prev_low = Some(low);
-                hold
-            } // There is no new high nor low; just hold
-            (Pivot::NoChange, _, _) => hold,
-            // We received a high but this is our first one.
-            // Store it but issue a hold signal
-            (Pivot::High(current), None, _) => {
-                self.prev_high = Some(current);
-                hold
+                self.support = Some(low);
             }
-            // We got a low, but we don't have a previous low
-            // Store this low, but issue a Hold Signal
-            (Pivot::Low(current), _, None) => {
-                self.prev_low = Some(current);
-                hold
+            _ => (),
+        };
+
+        let support = self.support;
+        let resistance = self.resistance;
+        let status = |swing_type| Some(SwingStatus::new(swing_type, support, resistance));
+
+        let is_higher_high = high
+            .zip(prev_high)
+            .map(|(high, prev_high)| high >= prev_high)
+            .unwrap_or(false);
+        let is_lower_low = low
+            .zip(prev_low)
+            .map(|(low, prev_low)| low <= prev_low)
+            .unwrap_or(false);
+
+        if high.is_some() && prev_high.is_some() {
+            if low.is_some() && prev_low.is_some() {
+                match (is_higher_high, is_lower_low) {
+                    (true, true) => status(SwingType::HigherHighAndLowerLow),
+                    (true, false) => status(SwingType::HigherHighAndHigherLow),
+                    (false, true) => status(SwingType::LowerHighAndLowerLow),
+                    (false, false) => status(SwingType::LowerHighAndHigherLow),
+                }
+            } else if is_higher_high {
+                status(SwingType::HigherHigh)
+            } else {
+                status(SwingType::LowerHigh)
             }
+        } else if low.is_some() && prev_low.is_some() {
+            if is_lower_low {
+                status(SwingType::LowerLow)
+            } else {
+                status(SwingType::HigherLow)
+            }
+        } else {
+            status(SwingType::Hold)
         }
     }
 }
