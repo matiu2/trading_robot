@@ -34,6 +34,22 @@ impl Pivot {
             _ => None,
         }
     }
+
+    pub fn is_high(&self) -> bool {
+        matches!(self, Pivot::High(_))
+    }
+
+    pub fn is_low(&self) -> bool {
+        matches!(self, Pivot::Low(_))
+    }
+
+    pub fn is_high_low(&self) -> bool {
+        matches!(self, Pivot::HighLow { .. })
+    }
+
+    pub fn is_no_change(&self) -> bool {
+        matches!(self, Pivot::NoChange)
+    }
 }
 
 /// Finds pivot points in a slice of types implementing `High` and `Low`.
