@@ -30,16 +30,6 @@ pub struct SwingStatus {
     resistance: Option<f32>,
 }
 
-impl SwingStatus {
-    pub fn new(swing_type: SwingType, support: Option<f32>, resistance: Option<f32>) -> Self {
-        SwingStatus {
-            swing_type,
-            support,
-            resistance,
-        }
-    }
-}
-
 /// Takes a list of high/low pivots and generates support and resistance lines from them
 pub struct SwingStatusIter<I> {
     input: I,
@@ -64,11 +54,16 @@ where
         }
     }
 
-    /// If the signal is Pivot::High and its value is greater than the last high we encountered
-    /// returns Some(SwingType::HigherHigh), otherwise returns None
+    /// If the signal is Pivot::High and its value is greater than the
+    /// last high we encountered returns Some(SwingType::HigherHigh).
+    /// If the signal is Pivot::HighLow and the previous low is None it
+    /// does the same , otherwise returns None
     fn check_hh(&self, signal: &Pivot) -> Option<SwingType> {
-        match (signal, &self.prev_high) {
-            (Pivot::High(high), Some(prev_high)) if high >= prev_high => {
+        match (signal, &self.prev_high, &self.prev_low) {
+            (Pivot::High(high), Some(prev_high), _) if high >= prev_high => {
+                Some(SwingType::HigherHigh)
+            }
+            (Pivot::HighLow { high, .. }, Some(prev_high), None) if high >= prev_high => {
                 Some(SwingType::HigherHigh)
             }
             _ => None,
@@ -225,13 +220,14 @@ impl<I> IntoSwingStatusIter for I where I: Iterator<Item = Pivot> {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{candle::test_data::Candle, pivots};
+
     use pretty_assertions::assert_eq;
 
     use super::*;
 
     #[test]
     fn high_low_swing_iter() {
+        // TODO: Update to test for tall candles
         let pivots = vec![
             Pivot::NoChange,
             Pivot::High(100.0),
@@ -386,6 +382,14 @@ mod tests {
         // Other negative case
         let pivot = Pivot::High(90.0);
         assert_eq!(ssi.check_hh(&pivot), None);
+        // It should also return a higher high for a tall candle when there's no previous low
+        let pivot = Pivot::HighLow {
+            high: 101.0,
+            low: 10.0,
+        };
+        ssi.prev_high = Some(100.0);
+        ssi.prev_low = None;
+        assert_eq!(ssi.check_hh(&pivot), Some(SwingType::HigherHigh));
     }
 
     #[test]
