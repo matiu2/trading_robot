@@ -49,10 +49,10 @@ impl Pivot {
 /// * `input` - A reference to a slice of types implementing `High` and `Low`.
 /// * `window_size` - The size of the window around each candle to consider.
 ///
-pub fn pivots<'a>(
-    input: &'a [impl High + Low + Dbg],
+pub fn pivots(
+    input: &[impl High + Low + Dbg],
     window_size: usize,
-) -> impl Iterator<Item = Pivot> + 'a {
+) -> impl Iterator<Item = Pivot> + '_ {
     // TODO: Make this a compile time check
     assert!(window_size != 0, "Can't have a zero sized sliding window");
     // TODO: Make this an Error instead of a panic?
