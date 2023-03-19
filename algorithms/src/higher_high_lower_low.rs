@@ -241,6 +241,18 @@ mod tests {
 
     use super::*;
 
+    #[test]
+    fn test_small() {
+        let pivots = vec![Pivot::NoChange];
+        let expected = vec![SwingStatus {
+            swing_type: SwingType::Hold,
+            support: None,
+            resistance: None,
+        }];
+        let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
+        assert_eq!(expected, got);
+    }
+
     fn create_swing_status_iter() -> SwingStatusIter<std::iter::Empty<Pivot>> {
         SwingStatusIter::new(std::iter::empty())
     }
