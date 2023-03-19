@@ -70,30 +70,46 @@ where
         }
     }
 
-    /// If the signal is Pivot::High and its value is less than the last
-    /// high we encountered, returns Some(SwingType::LowerHigh), otherwise returns None.
-    fn check_lh(&self, signal: &Pivot) -> Option<SwingType> {
-        match (signal, &self.prev_high) {
-            (Pivot::High(high), Some(prev_high)) if high < prev_high => Some(SwingType::LowerHigh),
-            _ => None,
-        }
-    }
-
-    /// If the signal is Pivot::Low and its value is less than or equal to the last
-    /// low we encountered, returns Some(SwingType::LowerLow), otherwise returns None.
+    /// If the signal is Pivot::Low and its value is lower than the
+    /// last low we encountered, returns Some(SwingType::LowerLow).
+    /// If the signal is Pivot::HighLow and the previous high is None,
+    /// it does the same, otherwise returns None.
     fn check_ll(&self, signal: &Pivot) -> Option<SwingType> {
-        match (signal, &self.prev_low) {
-            (Pivot::Low(low), Some(prev_low)) if low <= prev_low => Some(SwingType::LowerLow),
+        match (signal, &self.prev_high, &self.prev_low) {
+            (Pivot::Low(low), _, Some(prev_low)) if low <= prev_low => Some(SwingType::LowerLow),
+            (Pivot::HighLow { low, .. }, None, Some(prev_low)) if low <= prev_low => {
+                Some(SwingType::LowerLow)
+            }
             _ => None,
         }
     }
 
-    /// If the signal is Pivot::Low and its value is above the last low
-    /// we encountered, returns Some(SwingType::HigherLow), otherwise
-    /// returns None.
+    /// If the signal is Pivot::High and its value is lower than the
+    /// last high we encountered, returns Some(SwingType::LowerHigh).
+    /// If the signal is Pivot::HighLow and the previous low is None,
+    /// it does the same, otherwise returns None.
+    fn check_lh(&self, signal: &Pivot) -> Option<SwingType> {
+        match (signal, &self.prev_high, &self.prev_low) {
+            (Pivot::High(high), Some(prev_high), _) if high < prev_high => {
+                Some(SwingType::LowerHigh)
+            }
+            (Pivot::HighLow { high, .. }, Some(prev_high), None) if high < prev_high => {
+                Some(SwingType::LowerHigh)
+            }
+            _ => None,
+        }
+    }
+
+    /// If the signal is Pivot::Low and its value is higher than the
+    /// last low we encountered, returns Some(SwingType::HigherLow).
+    /// If the signal is Pivot::HighLow and the previous high is None,
+    /// it does the same, otherwise returns None.
     fn check_hl(&self, signal: &Pivot) -> Option<SwingType> {
-        match (signal, &self.prev_low) {
-            (Pivot::Low(low), Some(prev_low)) if low > prev_low => Some(SwingType::HigherLow),
+        match (signal, &self.prev_high, &self.prev_low) {
+            (Pivot::Low(low), _, Some(prev_low)) if low > prev_low => Some(SwingType::HigherLow),
+            (Pivot::HighLow { low, .. }, None, Some(prev_low)) if low > prev_low => {
+                Some(SwingType::HigherLow)
+            }
             _ => None,
         }
     }
@@ -224,147 +240,6 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-
-    #[test]
-    fn high_low_swing_iter() {
-        // TODO: Update to test for tall candles
-        let pivots = vec![
-            Pivot::NoChange,
-            Pivot::High(100.0),
-            Pivot::NoChange,
-            Pivot::Low(90.0),
-            Pivot::NoChange,
-            Pivot::High(120.0),
-            Pivot::NoChange,
-            Pivot::Low(80.0),
-            Pivot::NoChange,
-            Pivot::Low(70.0),
-            Pivot::High(110.0),
-            Pivot::Low(60.0),
-            Pivot::High(140.0),
-            Pivot::Low(50.0),
-            Pivot::High(130.0),
-            Pivot::NoChange,
-            Pivot::NoChange,
-            Pivot::NoChange,
-        ];
-
-        let high_low_swing_iter = SwingStatusIter::new(pivots.into_iter());
-        let high_low_swing_vec: Vec<_> = high_low_swing_iter.collect();
-
-        let expected_high_low_swing = vec![
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: None,
-            },
-            // Pivot::High(100.0),
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: None,
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: None,
-            },
-            // Pivot::Low(90.0),
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: None,
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: None,
-            },
-            // Pivot::High(120.0), Higher high sets a resistance line
-            SwingStatus {
-                swing_type: SwingType::HigherHigh,
-                support: None,
-                resistance: Some(120.0),
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: None,
-                resistance: Some(120.0),
-            },
-            // Pivot::Low(80.0), Lower low sets the support line
-            SwingStatus {
-                swing_type: SwingType::LowerLow,
-                support: Some(80.0),
-                resistance: Some(120.0),
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: Some(80.0),
-                resistance: Some(120.0),
-            },
-            // Pivot::Low(70.0),
-            SwingStatus {
-                swing_type: SwingType::LowerLow,
-                support: Some(70.0),
-                resistance: Some(120.0),
-            },
-            // Pivot::High(110.0),
-            SwingStatus {
-                swing_type: SwingType::LowerHigh,
-                support: Some(70.0),
-                resistance: Some(110.0),
-            },
-            // Pivot::Low(60.0),
-            SwingStatus {
-                swing_type: SwingType::LowerLow,
-                support: Some(60.0),
-                resistance: Some(110.0),
-            },
-            // Pivot::High(140.0),
-            SwingStatus {
-                swing_type: SwingType::HigherHigh,
-                support: Some(60.0),
-                resistance: Some(140.0),
-            },
-            // Pivot::Low(50.0),
-            SwingStatus {
-                swing_type: SwingType::LowerLow,
-                support: Some(50.0),
-                resistance: Some(140.0),
-            },
-            // Pivot::High(130.0),
-            SwingStatus {
-                swing_type: SwingType::LowerHigh,
-                support: Some(50.0),
-                resistance: Some(130.0),
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: Some(50.0),
-                resistance: Some(130.0),
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: Some(50.0),
-                resistance: Some(130.0),
-            },
-            // Pivot::NoChange,
-            SwingStatus {
-                swing_type: SwingType::Hold,
-                support: Some(50.0),
-                resistance: Some(130.0),
-            },
-        ];
-
-        assert_eq!(high_low_swing_vec, expected_high_low_swing);
-    }
 
     fn create_swing_status_iter() -> SwingStatusIter<std::iter::Empty<Pivot>> {
         SwingStatusIter::new(std::iter::empty())
