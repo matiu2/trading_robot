@@ -351,6 +351,106 @@ mod tests {
         assert_eq!(expected, got);
     }
 
+    #[test]
+    fn test_hh_tall() {
+        let pivots = vec![
+            Pivot::High(2.0),
+            Pivot::HighLow {
+                high: 3.0,
+                low: 1.0,
+            },
+        ];
+        let expected = vec![
+            SwingStatus {
+                swing_type: SwingType::Hold,
+                support: None,
+                resistance: None,
+            },
+            SwingStatus {
+                swing_type: SwingType::HigherHigh,
+                support: None,
+                resistance: Some(3.0),
+            },
+        ];
+        let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_hl_tall() {
+        let pivots = vec![
+            Pivot::Low(2.0),
+            Pivot::HighLow {
+                high: 3.0,
+                low: 4.0,
+            },
+        ];
+        let expected = vec![
+            SwingStatus {
+                swing_type: SwingType::Hold,
+                support: None,
+                resistance: None,
+            },
+            SwingStatus {
+                swing_type: SwingType::HigherLow,
+                support: Some(4.0),
+                resistance: None,
+            },
+        ];
+        let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_lh_tall() {
+        let pivots = vec![
+            Pivot::High(2.0),
+            Pivot::HighLow {
+                high: 1.0,
+                low: 3.0,
+            },
+        ];
+        let expected = vec![
+            SwingStatus {
+                swing_type: SwingType::Hold,
+                support: None,
+                resistance: None,
+            },
+            SwingStatus {
+                swing_type: SwingType::LowerHigh,
+                support: None,
+                resistance: Some(1.0),
+            },
+        ];
+        let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
+        assert_eq!(expected, got);
+    }
+
+    #[test]
+    fn test_ll_tall() {
+        let pivots = vec![
+            Pivot::Low(2.0),
+            Pivot::HighLow {
+                high: 3.0,
+                low: 1.0,
+            },
+        ];
+        let expected = vec![
+            SwingStatus {
+                swing_type: SwingType::Hold,
+                support: None,
+                resistance: None,
+            },
+            SwingStatus {
+                swing_type: SwingType::LowerLow,
+                support: Some(1.0),
+                resistance: None,
+            },
+        ];
+        let got: Vec<_> = SwingStatusIter::new(pivots.into_iter()).collect();
+        assert_eq!(expected, got);
+    }
+
     fn create_swing_status_iter() -> SwingStatusIter<std::iter::Empty<Pivot>> {
         SwingStatusIter::new(std::iter::empty())
     }
