@@ -1,33 +1,39 @@
-use std::ops::Deref;
+use crate::{Close, High, Low, Open};
 
 #[derive(Debug, PartialEq)]
 pub struct RenkoCandle {
     // The floor of the open price divided by size
-    level: i32,
+    pub level: i32,
     pub size: f32,
     pub direction: RenkoDirection,
 }
 
-impl RenkoCandle {
-    pub fn open(&self) -> f32 {
+impl Open for RenkoCandle {
+    fn open(&self) -> f32 {
         self.level as f32 * self.size
     }
+}
 
-    pub fn close(&self) -> f32 {
+impl Close for RenkoCandle {
+    fn close(&self) -> f32 {
         (match self.direction {
             RenkoDirection::Up => (self.level + 1) as f32,
             RenkoDirection::Down => (self.level - 1) as f32,
         }) * self.size
     }
+}
 
-    pub fn high(&self) -> f32 {
+impl High for RenkoCandle {
+    fn high(&self) -> f32 {
         match self.direction {
             RenkoDirection::Up => self.close(),
             RenkoDirection::Down => self.open(),
         }
     }
+}
 
-    pub fn low(&self) -> f32 {
+impl Low for RenkoCandle {
+    fn low(&self) -> f32 {
         match self.direction {
             RenkoDirection::Up => self.open(),
             RenkoDirection::Down => self.close(),
@@ -41,7 +47,7 @@ pub enum RenkoDirection {
     Down,
 }
 
-struct RenkoIterator<I> {
+pub struct RenkoIterator<I> {
     // Incoming prices of candle closes
     prices: I,
     // Size of the renko candles we'll output
@@ -53,10 +59,9 @@ struct RenkoIterator<I> {
     next_open: Option<i32>,
 }
 
-impl<I, Item> RenkoIterator<I>
+impl<I> RenkoIterator<I>
 where
-    I: Iterator<Item = Item>,
-    Item: Deref<Target = f32>,
+    I: Iterator<Item = f32>,
 {
     fn new(prices: I, size: f32) -> Self {
         Self {
@@ -79,14 +84,13 @@ where
     fn next_level(&mut self) -> Option<i32> {
         self.prices
             .next()
-            .map(|price| (price.deref() / self.size).floor() as i32)
+            .map(|price| (price / self.size).floor() as i32)
     }
 }
 
-impl<I, Item> Iterator for RenkoIterator<I>
+impl<I> Iterator for RenkoIterator<I>
 where
-    I: Iterator<Item = Item>,
-    Item: Deref<Target = f32>,
+    I: Iterator<Item = f32>,
 {
     type Item = RenkoCandle;
 
@@ -138,14 +142,13 @@ where
     }
 }
 
-trait Renko<I> {
+pub trait IntoRenkoIterator<I> {
     fn renko(self, size: f32) -> RenkoIterator<I>;
 }
 
-impl<I, Item> Renko<I> for I
+impl<I> IntoRenkoIterator<I> for I
 where
-    I: Iterator<Item = Item>,
-    Item: Deref<Target = f32>,
+    I: Iterator<Item = f32>,
 {
     fn renko(self, size: f32) -> RenkoIterator<Self> {
         RenkoIterator::new(self, size)
@@ -268,7 +271,7 @@ mod tests {
             },
             // All the rest ignored
         ];
-        let got: Vec<RenkoCandle> = prices.iter().renko(2.0).collect();
+        let got: Vec<RenkoCandle> = prices.into_iter().renko(2.0).collect();
         assert_eq!(expected, got);
     }
 }

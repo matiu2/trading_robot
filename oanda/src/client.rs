@@ -1,5 +1,6 @@
 pub mod account;
 pub mod instrument;
+pub mod trade;
 
 use std::borrow::ToOwned;
 
@@ -11,6 +12,7 @@ use crate::{error::Error, host::Host};
 
 use self::account::Accounts;
 use self::instrument::Instrument;
+use self::trade::Trade;
 
 pub struct Client {
     token: String,
@@ -100,5 +102,10 @@ impl Client {
             client: self,
             instrument: instrument.to_string(),
         }
+    }
+
+    /// Rest API for anything trade related
+    pub fn trade(&self, account_id: impl ToString) -> Trade {
+        Trade::new(self, account_id.to_string())
     }
 }

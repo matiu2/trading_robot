@@ -1,3 +1,2 @@
 [workspace]
-members = ["oanda", "algorithms"]
-
+members = ["oanda", "algorithms", "trader"]

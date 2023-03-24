@@ -25,9 +25,9 @@ pub enum SwingType {
 
 #[derive(Debug, PartialEq)]
 pub struct SwingStatus {
-    swing_type: SwingType,
-    support: Option<f32>,
-    resistance: Option<f32>,
+    pub swing_type: SwingType,
+    pub support: Option<f32>,
+    pub resistance: Option<f32>,
 }
 
 /// Takes a list of high/low pivots and generates support and resistance lines from them

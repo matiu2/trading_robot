@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use parse_display::{Display, FromStr};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
+mod algorithms_compat;
 
 #[derive(Display, Debug)]
 pub enum CandleType {
