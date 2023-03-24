@@ -53,10 +53,14 @@ pub struct RenkoIterator<I> {
     // Size of the renko candles we'll output
     size: f32,
     // If we're aiming at a level more than `size` candles away, we need to step there one at a time
-    target: Option<i32>,
+    last_level: Option<i32>,
+    // The open() level of the next cande we will emit
     // Made from the last incoming price or the close of the last renko released
     // It is the (price / size).floor().
-    next_open: Option<i32>,
+    start_level: Option<i32>,
+    // The direction of the last renko candle
+    // If a candle changes direction, we don't emit it
+    last_direction: Option<RenkoDirection>,
 }
 
 impl<I> RenkoIterator<I>
@@ -67,8 +71,9 @@ where
         Self {
             prices,
             size,
-            target: None,
-            next_open: None,
+            last_level: None,
+            start_level: None,
+            last_direction: None,
         }
     }
     /// Consumes the incoming iteator and returns the next
@@ -96,46 +101,60 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(loop {
-            match (self.next_open, self.target) {
+            match (self.start_level, self.last_level) {
                 // If we have no input
                 // Get input and loop
                 (None, _) => {
-                    self.next_open = Some(self.next_level()?);
+                    self.start_level = Some(self.next_level()?);
                 }
-                // We have a previous level and need to create a target
-                (Some(_next_open), None) => {
-                    self.target = Some(self.next_level()?);
+                // We have a previous level and need to create a last_level
+                (Some(_start_level), None) => {
+                    self.last_level = Some(self.next_level()?);
                 }
-                // Walk toward our target and release a candle
-                (Some(next_open), Some(target)) if next_open != target => {
-                    let diff = (target - next_open).min(1).max(-1);
-                    self.next_open = Some(next_open + diff);
-                    match diff {
+                // Walk toward our last_level and release a candle
+                (Some(start_level), Some(last_level)) if start_level != last_level => {
+                    let diff = (last_level - start_level).min(1).max(-1);
+                    self.start_level = Some(start_level + diff);
+                    let candle =  match diff {
                         -1 => {
-                            break RenkoCandle {
-                                level: next_open,
+                            RenkoCandle {
+                                level: start_level,
                                 size: self.size,
                                 direction: RenkoDirection::Down,
                             }
                         }
                         1 => {
-                            break RenkoCandle {
-                                level: next_open,
+                            RenkoCandle {
+                                level: start_level,
                                 size: self.size,
                                 direction: RenkoDirection::Up,
                             }
                         }
                         _ => unreachable!(
-                            "next_open: {next_open} target: {target} self.size: {} self.last_level: {:?} self.target: {:?}",
+                            "start_level: {start_level} last_level: {last_level} self.size: {} self.last_level: {:?} self.last_level: {:?}",
                             self.size,
-                            self.next_open,
-                            self.target
+                            self.start_level,
+                            self.last_level
                         ),
                     };
+                    // Store the new last_direction
+                    let last_direction = self.last_direction;
+                    self.last_direction = Some(candle.direction);
+                    match (last_direction, candle.direction) {
+                        // If we didn't have a last direction before, release this candle
+                        (None, _) => break candle,
+                        // If the candle is going the same way as the last candle, release the candle
+                        (Some(last_direction), _) if last_direction == candle.direction => {
+                            break candle
+                        }
+                        // If we get an up, down, up, down, up, down don't release anything except the first up
+                        // until we get two in a row in the same direction
+                        _ => (),
+                    }
                 }
-                // Sequential candles are the same, get a new target candle
-                (Some(_next_open), Some(_target)) => {
-                    self.target = Some(self.next_level()?);
+                // Sequential candles are the same, get a new last_level candle
+                (Some(_start_level), Some(_last_level)) => {
+                    self.last_level = Some(self.next_level()?);
                 }
             }
         })
@@ -235,28 +254,10 @@ mod tests {
                 size: 2.0,
                 direction: RenkoDirection::Up,
             },
-            // 12
-            RenkoCandle {
-                level: 7,
-                size: 2.0,
-                direction: RenkoDirection::Down,
-            },
-            // 12-17
-            RenkoCandle {
-                level: 6,
-                size: 2.0,
-                direction: RenkoDirection::Up,
-            },
             RenkoCandle {
                 level: 7,
                 size: 2.0,
                 direction: RenkoDirection::Up,
-            },
-            // 17-13
-            RenkoCandle {
-                level: 8,
-                size: 2.0,
-                direction: RenkoDirection::Down,
             },
             RenkoCandle {
                 level: 7,

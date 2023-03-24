@@ -211,344 +211,269 @@ mod test {
     fn pivot_renko() {
         let candles = [
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
+                level: 9853,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9852,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9851,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9850,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9849,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9848,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9847,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1803,
-                size: 0.0005999974,
+                level: 9845,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9844,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9843,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9843,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9843,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9843,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9844,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9845,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1805,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1804,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1803,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1802,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1801,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1800,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1799,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1799,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9846,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
+                level: 9849,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1794,
-                size: 0.0005999974,
+                level: 9850,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
+                level: 9851,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
+                level: 9851,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
+                level: 9850,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9849,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9848,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9847,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9846,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9845,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9845,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
+                level: 9846,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1798,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1797,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1796,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1794,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1793,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1794,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
+                direction: RenkoDirection::Down,
+            },
+            RenkoCandle {
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1795,
-                size: 0.0005999974,
+                level: 9848,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1794,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
             },
             RenkoCandle {
-                level: 1793,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1792,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1791,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1790,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1789,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1788,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Up,
             },
             RenkoCandle {
-                level: 1789,
-                size: 0.0005999974,
-                direction: RenkoDirection::Up,
-            },
-            RenkoCandle {
-                level: 1790,
-                size: 0.0005999974,
+                level: 9847,
+                size: 0.00010927235,
                 direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1789,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1788,
-                size: 0.0005999974,
-                direction: RenkoDirection::Down,
-            },
-            RenkoCandle {
-                level: 1787,
-                size: 0.0005999974,
-                direction: RenkoDirection::Up,
-            },
-            RenkoCandle {
-                level: 1788,
-                size: 0.0005999974,
-                direction: RenkoDirection::Up,
             },
         ];
         for candle in &candles {
@@ -577,9 +502,20 @@ mod test {
                 .set("height", height)
                 .set("viewBox", (0, 0, width, height));
 
+            let hh = candles
+                .iter()
+                .map(High::high)
+                .reduce(|acc, n| if n > acc { n } else { acc })
+                .unwrap();
+            let ll = candles
+                .iter()
+                .map(Low::low)
+                .reduce(|acc, n| if n < acc { n } else { acc })
+                .unwrap();
+
             // Scale and translate the data to fit the viewBox
-            let scale_y = height as f32 / (1.083 - 1.073);
-            let translate_y = -1.073 * scale_y;
+            let scale_y = height as f32 / (hh - ll);
+            let translate_y = -ll * scale_y;
             for (i, candle) in candles.iter().enumerate() {
                 let x = i as f64 * 36.0;
 
