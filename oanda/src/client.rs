@@ -14,6 +14,7 @@ use self::account::Accounts;
 use self::instrument::Instrument;
 use self::trade::Trade;
 
+#[derive(Debug, Clone)]
 pub struct Client {
     token: String,
     pub(crate) host: Host,
@@ -26,7 +27,13 @@ impl Client {
     /// `token` is your API Token
     /// `host` is the host to use
     pub fn new(token: String, host: Host) -> Client {
-        let rest_client = reqwest::Client::new();
+        let rest_client = reqwest::Client::builder()
+            .deflate(true)
+            .gzip(true)
+            .brotli(true)
+            .build()
+            .into_report()
+            .unwrap();
         Client {
             token,
             host,
@@ -40,9 +47,11 @@ impl Client {
     /// Given a URL path, creates a Get request builder with the correct
     /// host and authentication token
     pub fn start_get(&self, url: &str) -> RequestBuilder {
+        use reqwest::header::{ACCEPT, AUTHORIZATION};
         self.rest_client
             .get(url)
-            .header("Authorization", format!("Bearer {}", &self.token))
+            .header(AUTHORIZATION, format!("Bearer {}", &self.token))
+            .header(ACCEPT, "application/json")
     }
     /// Makes an authenticated get request to a path in the rest api
     pub async fn get<T: DeserializeOwned>(

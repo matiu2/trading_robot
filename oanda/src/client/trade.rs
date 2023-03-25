@@ -1,4 +1,4 @@
-//! List open trades - see http://developer.oanda.com/rest-live-v20/trade-ep/
+//! List open trades - see <http://developer.oanda.com/rest-live-v20/trade-ep/>
 
 pub use crate::model;
 

@@ -4,9 +4,12 @@ use chrono::{DateTime, Utc};
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
 use std::fmt;
+use tracing::debug;
 
 use self::model::{
-    candle::CandlestickGranularity, date_time::DateTimeFormat, instrument::DayOfWeek,
+    candle::CandlestickGranularity,
+    date_time::DateTimeFormat,
+    instrument::{DayOfWeek, PricingComponent},
 };
 
 pub struct Instrument<'a> {
@@ -25,69 +28,72 @@ impl<'a> Instrument<'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CandleStickRequest<'a> {
-    /// Name of the Instrument [required]
     #[serde(skip)]
     instruments: &'a Instrument<'a>,
-
-    /// Format of DateTime fields in the request and response.
     accept_datetime_format: Option<DateTimeFormat>,
-
-    /// The Price component(s) to get candlestick data for. [default=M]
-    price: Option<f32>,
-
-    /// The granularity of the candlesticks to fetch [default=S5]
+    price: Option<PricingComponent>,
     granularity: Option<CandlestickGranularity>,
-
-    /// The number of candlesticks to return in the response.
-    /// Count should not be specified if both the start and end parameters are provided,
-    /// as the time range combined with the granularity will determine the number of candlesticks to return. [default=500, maximum=5000]
     count: Option<u32>,
-
-    /// The start of the time range to fetch candlesticks for.
     from: Option<DateTime<Utc>>,
-
-    /// The end of the time range to fetch candlesticks for.
     to: Option<DateTime<Utc>>,
-
-    /// A flag that controls whether the candlestick is “smoothed” or not.
-    /// A smoothed candlestick uses the previous candle’s close price as its open price,
-    /// while an un-smoothed candlestick uses the first price from its time range as its open price. [default=False]
     smooth: Option<bool>,
-
-    /// A flag that controls whether the candlestick that is covered by the from time should be included in the results.
-    /// This flag enables clients to use the timestamp of the last completed candlestick received to poll for future candlesticks but avoid receiving the previous candlestick repeatedly. [default=True]
     include_first: Option<bool>,
-
-    /// The hour of the day (in the specified timezone) to use for granularities that have daily alignments. [default=17, minimum=0, maximum=23]
     daily_alignment: Option<u8>,
-
-    /// The timezone to use for the dailyAlignment parameter. Candlesticks with daily alignment will be aligned to the dailyAlignment hour within the alignmentTimezone.
-    /// Note that the returned times will still be represented in UTC. [default=America/New_York]
     alignment_timezone: Option<&'a str>,
-
-    /// The day of the week used for granularities that have weekly alignment. [default=Friday]
     weekly_alignment: Option<DayOfWeek>,
 }
 
 impl<'a> CandleStickRequest<'a> {
     builder_methods!([
         accept_datetime_format: DateTimeFormat,
-        price: f32,
+        "Format of DateTime fields in the request and response.",
+        price: PricingComponent,
+        "The Price component(s) to get candlestick data for. [default=M] \
+        A string of any combination of M, B and A \
+        * M = Mid - The midpoint between bid and ask \
+        * B = Bid - The price we can buy/long at \
+        * A = Ask - The price we can sell/short at \
+        ",
         granularity: CandlestickGranularity,
+        "The granularity of the candlesticks to fetch [default=S5]",
         count: u32,
+        "The number of candlesticks to return in the response. Count should not \
+             be specified if both the start and end parameters are provided, as the \
+             time range combined with the granularity will determine the number of \
+             candlesticks to return. [default=500, maximum=5000]",
         from: DateTime<Utc>,
+        "The start of the time range to fetch candlesticks for.",
         to: DateTime<Utc>,
+        "The end of the time range to fetch candlesticks for.",
         smooth: bool,
+        "A flag that controls whether the candlestick is “smoothed” or not. A \
+             smoothed candlestick uses the previous candle’s close price as its open \
+             price, while an un-smoothed candlestick uses the first price from its \
+             time range as its open price. [default=False]",
         include_first: bool,
+        "A flag that controls whether the candlestick that is covered by the \
+             from time should be included in the results. This flag enables clients \
+             to use the timestamp of the last completed candlestick received to poll \
+             for future candlesticks but avoid receiving the previous candlestick \
+             repeatedly. [default=True]",
         daily_alignment: u8,
+        "The hour of the day (in the specified timezone) to use for granularities \
+             that have daily alignments. [default=17, minimum=0, maximum=23]",
         alignment_timezone: &'a str,
+        "The timezone to use for the dailyAlignment parameter. Candlesticks with \
+             daily alignment will be aligned to the dailyAlignment hour within the \
+             alignmentTimezone. Note that the returned times will still be \
+             represented in UTC. [default=America/New_York]",
         weekly_alignment: DayOfWeek,
+        "The day of the week used for granularities that have weekly \
+             alignment. [default=Friday]",
     ]);
 
     pub async fn send(&self) -> Result<model::candle::CandleResponse, Error> {
         let path = format!("/v3/instruments/{}/candles", self.instruments.instrument);
         let url = self.instruments.client.url(&path);
         let request = self.instruments.client.start_get(&url).query(self);
+        debug!("Get candles request: {request:#?}");
         self.instruments
             .client
             .get(request)

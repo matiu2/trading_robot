@@ -1,4 +1,6 @@
-use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
+
+use serde::{Deserialize, Serialize, Serializer};
 
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -214,4 +216,49 @@ pub struct Tag {
 
     /// The name of the tag.
     pub name: String,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub enum PricingComponentOption {
+    Mid,
+    Bid,
+    Ask,
+}
+
+/// Used to form the request for candles. The oanda default is Mid
+#[derive(Debug, Default, Clone)]
+pub struct PricingComponent(BTreeSet<PricingComponentOption>);
+
+impl PricingComponent {
+    pub fn mid(mut self) -> PricingComponent {
+        self.0.insert(PricingComponentOption::Mid);
+        self
+    }
+
+    pub fn bid(mut self) -> PricingComponent {
+        self.0.insert(PricingComponentOption::Bid);
+        self
+    }
+
+    pub fn ask(mut self) -> PricingComponent {
+        self.0.insert(PricingComponentOption::Ask);
+        self
+    }
+}
+
+impl Serialize for PricingComponent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = String::new();
+        for item in &self.0 {
+            match item {
+                PricingComponentOption::Mid => s.push('M'),
+                PricingComponentOption::Bid => s.push('B'),
+                PricingComponentOption::Ask => s.push('A'),
+            }
+        }
+        serializer.serialize_str(&s)
+    }
 }

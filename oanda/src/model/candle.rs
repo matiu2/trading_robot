@@ -22,7 +22,7 @@ pub enum CandleType {
     All,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Candle {
     /// The start time of the candlestick
@@ -30,10 +30,12 @@ pub struct Candle {
 
     /// The candlestick data based on bids. Only provided if bid-based candles
     /// were requested.
+    /// The price that other buyers are willing to buy at; always lower than the ask price
     pub bid: Option<CandlestickData>,
 
     /// The candlestick data based on asks. Only provided if ask-based candles
     /// were requested.
+    /// The price that other sellers are willing to sell at, always higher than the bid price
     pub ask: Option<CandlestickData>,
 
     /// The candlestick data based on midpoints. Only provided if midpoint-based
@@ -50,7 +52,7 @@ pub struct Candle {
 }
 
 #[serde_as]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct CandlestickData {
     #[serde_as(as = "DisplayFromStr")]
