@@ -172,7 +172,11 @@ pub enum DateTimeInForce {
 
 #[cfg(test)]
 mod test {
+    use crate::model::trade::ClientExtensions;
+    use chrono::TimeZone;
+
     use super::StopLossTimeInForce;
+    use chrono::Utc;
     use pretty_assertions::assert_eq;
 
     #[test]
@@ -182,6 +186,28 @@ mod test {
             price: Some(1.4),
             time_in_force: super::StopLossTimeInForce::GTC,
             ..Default::default()
+        };
+        assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn stop_loss_builder_all_fields() {
+        let gtd_time = Utc.with_ymd_and_hms(2025, 4, 1, 7, 53, 0).unwrap();
+        let extensions = ClientExtensions::builder()
+            .id("trader")
+            .tag("Joe")
+            .comment("open");
+
+        let got = super::StopLoss::builder()
+            .distance(99.9)
+            .gtd(gtd_time)
+            .client_extensions(extensions.clone());
+        let expected = super::StopLoss {
+            price: None,
+            time_in_force: super::StopLossTimeInForce::GTD,
+            distance: Some(99.9),
+            gtd_time: Some(gtd_time),
+            client_extensions: Some(extensions),
         };
         assert_eq!(got, expected);
     }

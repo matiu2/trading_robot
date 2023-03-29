@@ -1,9 +1,8 @@
+use super::order::OrderType;
 use chrono::DateTime;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-use super::order::OrderType;
 
 /// TradeState represents the state of a trade.
 ///
@@ -21,7 +20,7 @@ pub enum TradeState {
     CloseWhenTradeable,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Default, Clone)]
 pub struct ClientExtensions {
     /// The Client ID of the Order/Trade.
     pub id: String,
@@ -29,6 +28,56 @@ pub struct ClientExtensions {
     pub tag: String,
     /// A comment associated with the Order/Trade.
     pub comment: String,
+}
+
+pub struct ClientExtensionsBuilder {}
+
+#[derive(Default)]
+pub struct ClientExtensionsBuilderId {
+    /// The Client ID of the Order/Trade.
+    pub id: String,
+}
+
+#[derive(Default)]
+pub struct ClientExtensionsBuilderTag {
+    /// The Client ID of the Order/Trade.
+    pub id: String,
+    /// A tag associated with the Order/Trade.
+    pub tag: String,
+}
+
+impl ClientExtensions {
+    pub fn builder() -> ClientExtensionsBuilder {
+        ClientExtensionsBuilder {}
+    }
+}
+
+impl ClientExtensionsBuilder {
+    /// The Client ID of the Order/Trade.
+    pub fn id(self, id: impl ToString) -> ClientExtensionsBuilderId {
+        ClientExtensionsBuilderId { id: id.to_string() }
+    }
+}
+
+impl ClientExtensionsBuilderId {
+    /// A tag associated with the Order/Trade.
+    pub fn tag(self, tag: impl ToString) -> ClientExtensionsBuilderTag {
+        ClientExtensionsBuilderTag {
+            id: self.id,
+            tag: tag.to_string(),
+        }
+    }
+}
+
+impl ClientExtensionsBuilderTag {
+    /// A comment associated with the Order/Trade.
+    pub fn comment(self, comment: impl ToString) -> ClientExtensions {
+        ClientExtensions {
+            id: self.id,
+            tag: self.tag,
+            comment: comment.to_string(),
+        }
+    }
 }
 
 /// Specification of which price component should be used when determining
