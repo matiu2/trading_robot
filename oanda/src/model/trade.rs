@@ -3,6 +3,8 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::order::OrderType;
+
 /// TradeState represents the state of a trade.
 ///
 /// * `OPEN`: The Trade is currently open.
@@ -19,7 +21,7 @@ pub enum TradeState {
     CloseWhenTradeable,
 }
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClientExtensions {
     /// The Client ID of the Order/Trade.
     pub id: String,
@@ -27,29 +29,6 @@ pub struct ClientExtensions {
     pub tag: String,
     /// A comment associated with the Order/Trade.
     pub comment: String,
-}
-
-#[derive(Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum OrderType {
-    /// A Market Order.
-    Market,
-    /// A Limit Order.
-    Limit,
-    /// A Stop Order.
-    Stop,
-    /// A Market-if-touched Order.
-    MarketIfTouched,
-    /// A Take Profit Order.
-    TakeProfit,
-    /// A Stop Loss Order.
-    StopLoss,
-    /// A Guaranteed Stop Loss Order.
-    GuaranteedStopLoss,
-    /// A Trailing Stop Loss Order.
-    TrailingStopLoss,
-    /// A Fixed Price Order.
-    FixedPrice,
 }
 
 /// Specification of which price component should be used when determining
@@ -235,9 +214,9 @@ pub struct Trade {
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TimeInForce {
-    /// The Order is "Good unTil Cancelled".
+    /// The Order is "Good until Cancelled".
     GTC,
-    /// The Order is "Good unTil Date" and will be cancelled at the provided time.
+    /// The Order is "Good until Date" and will be cancelled at the provided time.
     GTD,
     /// The Order is "Good For Day" and will be cancelled at 5pm New York time.
     GFD,
@@ -250,5 +229,29 @@ pub enum TimeInForce {
 impl Default for TimeInForce {
     fn default() -> Self {
         TimeInForce::GTC
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum MarketOrderTimeInForce {
+    /// The Order must be immediately "Filled Or Killed".
+    FOK,
+    /// The Order must be "Immediately partially filled Or Cancelled".
+    IOC,
+}
+
+impl Default for MarketOrderTimeInForce {
+    fn default() -> Self {
+        Self::FOK
+    }
+}
+
+impl Into<TimeInForce> for MarketOrderTimeInForce {
+    fn into(self) -> TimeInForce {
+        match self {
+            MarketOrderTimeInForce::FOK => TimeInForce::FOK,
+            MarketOrderTimeInForce::IOC => TimeInForce::IOC,
+        }
     }
 }

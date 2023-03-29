@@ -1,4 +1,4 @@
-//! List open trades - see <http://developer.oanda.com/rest-live-v20/trade-ep/>
+//! List open trades - see <https://developer.oanda.com/rest-live-v20/trade-ep/>
 
 pub use crate::model;
 
@@ -33,7 +33,7 @@ impl<'a> OpenTradesRequest<'a> {
     pub fn accept_date_time_format(mut self, accept_date_time_format: DateTimeFormat) -> Self {
         self.accept_date_time_format = accept_date_time_format;
         todo!();
-        self
+        // self
     }
     // pub fn send(&self) -> Result<
 }

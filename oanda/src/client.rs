@@ -1,5 +1,6 @@
 pub mod account;
 pub mod instrument;
+pub mod order;
 pub mod trade;
 
 use std::borrow::ToOwned;
@@ -113,8 +114,12 @@ impl Client {
         }
     }
 
-    /// Rest API for anything trade related
+    /// Rest API for anything trade related including closing an existing Trade
     pub fn trade(&self, account_id: impl ToString) -> Trade {
         Trade::new(self, account_id.to_string())
     }
+
+    // Rest API for anything order related including openning a new position
+    // TODO: order
+    // pub fn order(&self, account_id: impl ToString) -> Order { Order::new(self, account_id.to_string()) }
 }

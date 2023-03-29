@@ -1,6 +1,5 @@
 use error_stack::{Result, ResultExt};
 use serde::Serialize;
-use tracing::debug;
 
 pub use crate::model;
 
