@@ -196,7 +196,8 @@ mod test {
         let extensions = ClientExtensions::builder()
             .id("trader")
             .tag("Joe")
-            .comment("open");
+            .comment("open")
+            .build();
 
         let got = super::StopLoss::builder()
             .distance(99.9)
