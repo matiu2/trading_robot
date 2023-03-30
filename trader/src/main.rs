@@ -43,6 +43,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
                 .granularity(Granularity::S5)
                 .count(2)
                 .price(PricingComponent::default().bid().ask())
+                .build()
                 .send()
                 .await
                 .change_context(Error::new("Couldn't get the last candle"))
@@ -54,6 +55,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
         .candles()
         .granularity(Granularity::M15)
         .count(200)
+        .build()
         .send()
         .await
         .change_context(Error::new("Couldn't download the candles"))?;
@@ -96,6 +98,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
             .candles()
             .to(end_time)
             .count(200)
+            .build()
             .send()
             .await
             .change_context(Error::new("Couldn't download subsequent candles"))?
