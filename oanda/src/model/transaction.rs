@@ -26,4 +26,4 @@ pub struct TakeProfitDetails {
     pub client_extensions: Option<ClientExtensions>,
 }
 
-pub use stop_loss::{StopLoss, StopLossDetailsCommon};
+pub use stop_loss::{SLTrigger, StopLoss};
