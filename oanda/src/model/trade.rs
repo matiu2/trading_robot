@@ -214,47 +214,42 @@ pub struct Trade {
     pub trailing_stop_loss_order: Option<HashMap<String, serde_json::Value>>,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum TimeInForce {
     /// The Order is "Good until Cancelled".
-    GTC,
+    #[default]
+    Gtc,
     /// The Order is "Good until Date" and will be cancelled at the provided time.
-    GTD,
+    Gtd,
     /// The Order is "Good For Day" and will be cancelled at 5pm New York time.
-    GFD,
+    Gfd,
     /// The Order must be immediately "Filled Or Killed".
-    FOK,
+    Fok,
     /// The Order must be "Immediately partially filled Or Cancelled".
-    IOC,
-}
-
-impl Default for TimeInForce {
-    fn default() -> Self {
-        TimeInForce::GTC
-    }
+    Ioc,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "UPPERCASE")]
 pub enum MarketOrderTimeInForce {
     /// The Order must be immediately "Filled Or Killed".
-    FOK,
+    Fok,
     /// The Order must be "Immediately partially filled Or Cancelled".
-    IOC,
+    Ioc,
 }
 
 impl Default for MarketOrderTimeInForce {
     fn default() -> Self {
-        Self::FOK
+        Self::Fok
     }
 }
 
-impl Into<TimeInForce> for MarketOrderTimeInForce {
-    fn into(self) -> TimeInForce {
-        match self {
-            MarketOrderTimeInForce::FOK => TimeInForce::FOK,
-            MarketOrderTimeInForce::IOC => TimeInForce::IOC,
+impl From<MarketOrderTimeInForce> for TimeInForce {
+    fn from(val: MarketOrderTimeInForce) -> Self {
+        match val {
+            MarketOrderTimeInForce::Fok => TimeInForce::Fok,
+            MarketOrderTimeInForce::Ioc => TimeInForce::Ioc,
         }
     }
 }

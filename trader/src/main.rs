@@ -12,7 +12,6 @@ use std::env;
 mod error;
 use error::Error;
 use tracing::{debug, info, instrument};
-use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -24,7 +23,7 @@ async fn main() -> Result<(), Error> {
     // Get a list of open trades
     trade("EUR_USD")
         .await
-        .attach_printable_lazy(|| format!("Instrument: eur_usd"))?;
+        .attach_printable_lazy(|| "Instrument: eur_usd")?;
     Ok(())
 }
 

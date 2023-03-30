@@ -12,21 +12,16 @@ mod rust {
     use serde_with::serde_as;
     use typed_builder::TypedBuilder;
 
-    #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
+    #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Clone, Copy)]
     #[serde(rename_all = "UPPERCASE")]
     pub enum TimeInForce {
         /// The Order is "Good until Cancelled".
-        GTC,
+        #[default]
+        Gtc,
         /// The Order is "Good until Date" and will be cancelled at the provided time.
-        GTD(DateTime<Utc>),
+        Gtd(DateTime<Utc>),
         /// The Order is "Good For Day" and will be cancelled at 5pm New York time.
-        GFD,
-    }
-
-    impl Default for TimeInForce {
-        fn default() -> Self {
-            Self::GTC
-        }
+        Gfd,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -70,9 +65,9 @@ impl From<rust::StopLoss> for oanda::StopLoss {
             SLTrigger::Distance(distance) => (None, Some(distance)),
         };
         let (time_in_force, gtd_time) = match stop_loss.time_in_force {
-            TimeInForce::GTC => (oanda::TimeInForce::GTC, None),
-            TimeInForce::GTD(date) => (oanda::TimeInForce::GTD, Some(date)),
-            TimeInForce::GFD => (oanda::TimeInForce::GFD, None),
+            TimeInForce::Gtc => (oanda::TimeInForce::Gtc, None),
+            TimeInForce::Gtd(date) => (oanda::TimeInForce::Gtd, Some(date)),
+            TimeInForce::Gfd => (oanda::TimeInForce::Gfd, None),
         };
         Self {
             price,
@@ -103,11 +98,11 @@ impl TryFrom<oanda::StopLoss> for rust::StopLoss {
             }
         };
         let time_in_force = match (input.time_in_force, input.gtd_time) {
-            (oanda::TimeInForce::GTC, _) => rust::TimeInForce::GTC,
-            (oanda::TimeInForce::GTD, Some(gtd_time)) => rust::TimeInForce::GTD(gtd_time),
-            (oanda::TimeInForce::GTD, None) => return Err(report!(Error::JsonConversion)
+            (oanda::TimeInForce::Gtc, _) => rust::TimeInForce::Gtc,
+            (oanda::TimeInForce::Gtd, Some(gtd_time)) => rust::TimeInForce::Gtd(gtd_time),
+            (oanda::TimeInForce::Gtd, None) => return Err(report!(Error::JsonConversion)
                 .attach_printable(format!("Incoming StopLoss had time in force as good til date, but didn't provide a date: {input:#?}"))),
-            (oanda::TimeInForce::GFD, _) => rust::TimeInForce::GFD,
+            (oanda::TimeInForce::Gfd, _) => rust::TimeInForce::Gfd,
         };
         Ok(Self {
             trigger,
@@ -128,16 +123,16 @@ mod oanda {
     #[serde(rename_all = "UPPERCASE")]
     pub enum TimeInForce {
         /// The Order is "Good until Cancelled".
-        GTC,
+        Gtc,
         /// The Order is "Good until Date" and will be cancelled at the provided time.
-        GTD,
+        Gtd,
         /// The Order is "Good For Day" and will be cancelled at 5pm New York time.
-        GFD,
+        Gfd,
     }
 
     impl Default for TimeInForce {
         fn default() -> Self {
-            Self::GTC
+            Self::Gtc
         }
     }
 
@@ -222,12 +217,12 @@ mod test {
     fn stop_loss_builder() {
         let got = rust::StopLoss::builder()
             .trigger(SLTrigger::Price(1.4))
-            .time_in_force(rust::TimeInForce::GTC)
+            .time_in_force(rust::TimeInForce::Gtc)
             .build();
         let got: oanda::StopLoss = got.into();
         let expected = oanda::StopLoss {
             price: Some(1.4),
-            time_in_force: oanda::TimeInForce::GTC,
+            time_in_force: oanda::TimeInForce::Gtc,
             ..Default::default()
         };
         assert_eq!(got, expected);
@@ -244,13 +239,13 @@ mod test {
 
         let got = rust::StopLoss::builder()
             .trigger(SLTrigger::Distance(99.9))
-            .time_in_force(rust::TimeInForce::GTD(gtd_time))
+            .time_in_force(rust::TimeInForce::Gtd(gtd_time))
             .client_extensions(extensions.clone())
             .build();
         let got: oanda::StopLoss = got.into();
         let expected = oanda::StopLoss {
             price: None,
-            time_in_force: oanda::TimeInForce::GTD,
+            time_in_force: oanda::TimeInForce::Gtd,
             distance: Some(99.9),
             gtd_time: Some(gtd_time),
             client_extensions: Some(extensions),
@@ -264,7 +259,7 @@ mod test {
         let got: rust::StopLoss = serde_json::from_str(&input).unwrap();
         let expected = rust::StopLoss {
             trigger: SLTrigger::Price(1.7),
-            time_in_force: rust::TimeInForce::GTC,
+            time_in_force: rust::TimeInForce::Gtc,
             client_extensions: None,
         };
         assert_eq!(expected, got);

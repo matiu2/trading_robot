@@ -38,17 +38,12 @@ impl FromStr for DateTimeWrapper {
     }
 }
 
-#[derive(Display, FromStr, Debug, Clone, Copy, Serialize)]
+#[derive(Display, Default, FromStr, Debug, Clone, Copy, Serialize)]
 #[display(style = "UPPERCASE")]
 pub enum DateTimeFormat {
     /// DateTime fields will be specified or returned in the “12345678.000000123” format.
     Unix,
     /// DateTime will be specified or returned in “YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ” format.
+    #[default]
     Rfc3339,
-}
-
-impl Default for DateTimeFormat {
-    fn default() -> Self {
-        DateTimeFormat::Rfc3339
-    }
 }
