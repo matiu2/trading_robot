@@ -14,7 +14,7 @@ It doesn't show my collaboration skills. I would program and comment differently
 
 ## Overview
 
-This is a trading robot in progress. There are 
+This is a trading robot in progress.
 
 The main part of the robot [is here](https://github.com/matiu2/trading_robot/blob/main/trader/src/main.rs). So far all it does is download some candles, run some algorithms, and is still deciding if it wants to enter a trade. 
 
