@@ -30,9 +30,11 @@ async fn main() -> Result<(), Error> {
 #[instrument]
 async fn trade(instrument: &str) -> Result<(), Error> {
     info!("trade start");
-    // Get 200 candles
     let token = env::var("OANDA_TOKEN").expect("No OANDA_TOKEN environment variable");
     let client = Client::new(token, Dev);
+    // Ask for the last candle so we can get the latest bid and ask prices to decide whether to enter the trade or not
+    // We're doing it in the background, because I wanted to have the information ready
+    // TODO: After consideration, it's probably better and easier to just wait for the last candle at the end
     let last_candle_handle = {
         let client = client.clone();
         let instrument = instrument.to_owned();
@@ -49,6 +51,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
                 .change_context(Error::new("Couldn't get the last candle"))
         })
     };
+    // Get 200 historic candles (the maximum the API allows)
     debug!("Getting candles");
     let eur_usd = client.instrument(instrument);
     let response = eur_usd
@@ -59,7 +62,6 @@ async fn trade(instrument: &str) -> Result<(), Error> {
         .send()
         .await
         .change_context(Error::new("Couldn't download the candles"))?;
-    // debug!("Response: {response:#?}");
     // Get the 14 ATR
     let Some(atr) = response.candles[(response.candles.len() - 14)..]
         .iter()
@@ -69,6 +71,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
     let mut normal_candles = response.candles;
 
     // We'll keep looping until we get support and resistance lines
+    // NOTE: Consider turning the 200 candles thing into a stream
     let (support, resistance) = loop {
         // Turn the candles into renko candles
         let candles: Vec<RenkoCandle> = normal_candles
@@ -77,7 +80,7 @@ async fn trade(instrument: &str) -> Result<(), Error> {
             .renko(atr)
             .collect();
         debug!("renko: {candles:#?}");
-        // Run hhll
+        // Run higher high, lower low
         let pivots = pivots(candles.as_slice(), 5);
         debug!("pivots: {:#?}", pivots.clone().collect::<Vec<_>>());
         let SupportAndResistance {
