@@ -253,3 +253,10 @@ impl From<MarketOrderTimeInForce> for TimeInForce {
         }
     }
 }
+
+#[derive(Debug, Deserialize)]
+pub struct TradesResponse {
+    pub trades: Vec<Trade>,
+    #[serde(rename = "lastTransactionID")]
+    pub last_transaction_id: String,
+}
