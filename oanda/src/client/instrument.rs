@@ -21,6 +21,7 @@ pub struct Instrument<'a> {
 
 impl<'a> Instrument<'a> {
     /// See <https://developer.oanda.com/rest-live-v20/instrument-ep/>
+    #[allow(clippy::type_complexity)]
     pub fn candles(
         &self,
     ) -> CandleStickRequestBuilder<((&Instrument,), (), (), (), (), (), (), (), (), (), (), ())>

@@ -4,8 +4,8 @@ use crate::client::Client;
 // use self::model::date_time::DateTimeFormat;
 
 pub struct Order<'a> {
-    client: &'a Client,
-    account_id: String,
+    pub client: &'a Client,
+    pub account_id: String,
 }
 
 impl<'a> Order<'a> {
@@ -13,7 +13,9 @@ impl<'a> Order<'a> {
         Self { client, account_id }
     }
 
-    // pub async fn order(&self) -> OrderRequest { todo!() }
+    // pub async fn order(&self) -> OrderRequest {
+    //     todo!()
+    // }
 }
 
 // pub struct OrderRequest<'a> {  }
