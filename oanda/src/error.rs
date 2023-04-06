@@ -4,6 +4,8 @@ use reqwest::StatusCode;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("Get list of open trades")]
+    ListOpenTrades,
     // #[error("Conversion Error: {err:? }: {r#struct}.{field}: {value} ")]
     // Conversion {
     //     r#struct: String,

@@ -1,41 +1,36 @@
 use self::model::{date_time::DateTimeFormat, trade::TradesResponse};
 use super::Trade;
 use crate::Error;
-use error_stack::{Result, ResultExt};
+use error_stack::{IntoReport, Result, ResultExt};
 use serde::Serialize;
 use tracing::debug;
+use typed_builder::TypedBuilder;
 
 pub use crate::model;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TypedBuilder)]
 pub struct OpenTradesRequest<'a> {
     #[serde(skip)]
     trade_endpoint: &'a Trade<'a>,
+    #[builder(default)]
     accept_date_time_format: DateTimeFormat,
 }
 
 impl<'a> OpenTradesRequest<'a> {
-    pub fn new(trade_endpoint: &'a Trade<'a>) -> Self {
-        Self {
-            trade_endpoint,
-            accept_date_time_format: DateTimeFormat::default(),
-        }
-    }
-
-    pub fn accept_date_time_format(mut self, accept_date_time_format: DateTimeFormat) -> Self {
-        self.accept_date_time_format = accept_date_time_format;
-        self
-    }
     pub async fn send(&self) -> Result<TradesResponse, Error> {
         let path = format!("/v3/accounts/{}/openTrades", self.trade_endpoint.account_id);
         let url = self.trade_endpoint.client.url(&path);
         let request = self.trade_endpoint.client.start_get(&url).query(self);
         debug!("Get open trades request: {request:#?}");
+        let request = self.trade_endpoint.client.start_get(&url).header(
+            "Accept-Datetime-Format",
+            self.accept_date_time_format.to_string(),
+        );
         self.trade_endpoint
             .client
             .get(request)
             .await
-            .attach_printable_lazy(|| format!("With these params: {:?}", self))
+            .change_context(Error::ListOpenTrades)
     }
 }
 
@@ -80,6 +75,7 @@ mod api_tests {
             .trade(account_id)
             .open_trades()
             .accept_date_time_format(DateTimeFormat::Rfc3339)
+            .build()
             .send()
             .await
             .unwrap();

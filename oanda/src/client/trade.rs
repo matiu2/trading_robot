@@ -17,8 +17,8 @@ impl<'a> Trade<'a> {
     }
 
     /// List all open trades on the acount
-    pub fn open_trades(&self) -> OpenTradesRequest {
-        OpenTradesRequest::new(self)
+    pub fn open_trades(&self) -> open_trades_request::OpenTradesRequestBuilder<((&Trade,), ())> {
+        OpenTradesRequest::builder().trade_endpoint(self)
     }
 
     // /// History of trades on the account
