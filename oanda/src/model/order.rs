@@ -126,7 +126,7 @@ pub enum OrderType {
 }
 
 /// Enum representing the behavior for filling an order.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderPositionFill {
     /// When the Order is filled, only allow Positions to be opened or extended.
@@ -137,5 +137,6 @@ pub enum OrderPositionFill {
     ReduceOnly,
     /// When the Order is filled, use REDUCE_FIRST behaviour for non-client hedging Accounts,
     /// and OPEN_ONLY behaviour for client hedging Accounts.
+    #[default]
     Default,
 }

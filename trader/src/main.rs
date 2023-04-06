@@ -4,8 +4,9 @@ use algorithms::{
 };
 use error_stack::{bail, report, Result, ResultExt};
 use oanda::{
+    client::instrument::Instrument,
     host::Host::Dev,
-    model::{candle::CandlestickGranularity as Granularity, instrument::PricingComponent},
+    model::{candle::CandlestickGranularity as Granularity, instrument::PricingComponent, Candle},
     Client,
 };
 use std::env;
@@ -65,51 +66,10 @@ async fn trade(instrument: &str) -> Result<(), Error> {
     // Get the 14 ATR
     let Some(atr) = response.candles[(response.candles.len() - 14)..]
         .iter()
-        .atr() else { bail!(Error::new("Unable to calculate atr for {instrument}. TODO: Maybe try getting more candles"))};
+        .atr() else { bail!(Error::new("Unable to calculate atr for {instrument}."))};
     debug!("atr: {atr:#?}");
 
-    let mut normal_candles = response.candles;
-
-    // We'll keep looping until we get support and resistance lines
-    // NOTE: Consider turning the 200 candles thing into a stream
-    let (support, resistance) = loop {
-        // Turn the candles into renko candles
-        let candles: Vec<RenkoCandle> = normal_candles
-            .iter()
-            .flat_map(|candle| candle.mid.as_ref().map(|mid| mid.c))
-            .renko(atr)
-            .collect();
-        debug!("renko: {candles:#?}");
-        // Run higher high, lower low
-        let pivots = pivots(candles.as_slice(), 5);
-        debug!("pivots: {:#?}", pivots.clone().collect::<Vec<_>>());
-        let SupportAndResistance {
-            support,
-            resistance,
-        } = pivots.into_iter().high_low_swing().support_and_resistance();
-        if let Some((support, resistance)) = support.zip(resistance) {
-            break (support, resistance);
-        }
-        // If we don't have support and resistance lines, go back and get another 200 candles
-        debug!(
-            "Getting more candles. Currently have {}",
-            normal_candles.len()
-        );
-        let Some(first_candle)  = normal_candles.first() else {bail!(Error::new("Couldn't even get the first candle"))};
-        let end_time = first_candle.time;
-        let mut new_candles = eur_usd
-            .candles()
-            .to(end_time)
-            .count(200)
-            .build()
-            .send()
-            .await
-            .change_context(Error::new("Couldn't download subsequent candles"))?
-            .candles;
-        debug_assert_ne!(new_candles.last(), normal_candles.first(), "You shouldn't have a duplicate candle in there, delete the last candle from what you receive. Maybe try .include_first(false)");
-        new_candles.extend(normal_candles);
-        normal_candles = new_candles;
-    };
+    let (support, resistance) = support_and_resistance(&eur_usd, response.candles, atr).await?;
     debug!("support: {support:#?} resistance: {resistance:#?}");
 
     // Now we have our support and resistance, get the last candle with bid and ask prices to see what we're risking
@@ -140,4 +100,57 @@ async fn trade(instrument: &str) -> Result<(), Error> {
     }
     // todo!("Sell");
     Ok(())
+}
+
+/// Returns support and resistance lines given some candles
+///
+/// Uses the instrument client to get more candes if more are needed
+async fn support_and_resistance(
+    instrument: &Instrument<'_>,
+    mut normal_candles: Vec<Candle>,
+    atr: f32,
+) -> Result<(f32, f32), Error> {
+    // We'll keep looping until we get support and resistance lines
+    // NOTE: Consider turning the 200 candles thing into a stream
+    // NOTE: Maybe we don't want to just throw away the candles ?
+    loop {
+        // Turn the candles into renko candles
+        let candles: Vec<RenkoCandle> = normal_candles
+            .iter()
+            .flat_map(|candle| candle.mid.as_ref().map(|mid| mid.c))
+            .renko(atr)
+            .collect();
+        debug!("renko: {candles:#?}");
+        // Run higher high, lower low
+        let pivots = pivots(candles.as_slice(), 5);
+        debug!("pivots: {:#?}", pivots.clone().collect::<Vec<_>>());
+        let SupportAndResistance {
+            support,
+            resistance,
+        } = pivots.into_iter().high_low_swing().support_and_resistance();
+        if let Some((support, resistance)) = support.zip(resistance) {
+            // If we have support and resistance lines, let's go
+            break Ok((support, resistance));
+        }
+        // If we don't have support and resistance lines, go back and get another 200 candles
+        debug!(
+            "Getting more candles. Currently have {}",
+            normal_candles.len()
+        );
+        // Get the open time from the first candle we have, and ask for candles before that
+        let Some(first_candle) = normal_candles.first() else {bail!(Error::new("Couldn't even get the first candle"))};
+        let end_time = first_candle.time;
+        let mut new_candles = instrument
+            .candles()
+            .to(end_time)
+            .count(200)
+            .build()
+            .send()
+            .await
+            .change_context(Error::new("Couldn't download subsequent candles"))?
+            .candles;
+        debug_assert_ne!(new_candles.last(), normal_candles.first(), "You shouldn't have a duplicate candle in there, delete the last candle from what you receive. Maybe try .include_first(false)");
+        new_candles.extend(normal_candles);
+        normal_candles = new_candles;
+    }
 }

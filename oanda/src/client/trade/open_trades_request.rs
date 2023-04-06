@@ -34,7 +34,7 @@ impl<'a> OpenTradesRequest<'a> {
 
 #[cfg(test)]
 mod api_tests {
-    use super::super::test_utils::get_account_id;
+    use crate::client::test_utils::get_account_id;
     use crate::model::date_time::DateTimeFormat;
     use crate::Client;
     use std::env::var;

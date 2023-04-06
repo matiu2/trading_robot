@@ -13,6 +13,7 @@ use crate::{error::Error, host::Host};
 
 use self::account::Accounts;
 use self::instrument::Instrument;
+use self::order::Order;
 use self::trade::Trade;
 
 #[derive(Debug, Clone)]
@@ -120,6 +121,37 @@ impl Client {
     }
 
     // Rest API for anything order related including openning a new position
-    // TODO: order
-    // pub fn order(&self, account_id: impl ToString) -> Order { Order::new(self, account_id.to_string()) }
+    pub fn order(&self, account_id: impl ToString) -> Order {
+        Order::new(self, account_id.to_string())
+    }
+}
+
+#[cfg(test)]
+mod test_utils {
+    use crate::{Client, Error};
+    use error_stack::{IntoReport, Result, ResultExt};
+    use lazy_static::lazy_static;
+    use std::sync::Mutex;
+
+    lazy_static! {
+        static ref ACCOUNT_ID: Mutex<Option<String>> = Mutex::new(None);
+    }
+
+    pub async fn get_account_id(client: &Client) -> Result<String, Error> {
+        let mut account_id = ACCOUNT_ID.lock().unwrap();
+        if let Some(account_id) = account_id.as_ref() {
+            Ok(account_id.clone())
+        } else {
+            let accounts = client.accounts().list().await?;
+            let out = accounts
+                .into_iter()
+                .next()
+                .ok_or_else(|| Error::Other)
+                .into_report()
+                .attach_printable_lazy(|| "No oanda accounts found")?
+                .id;
+            *account_id = Some(out.clone());
+            Ok(out)
+        }
+    }
 }
