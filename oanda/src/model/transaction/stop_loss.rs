@@ -1,8 +1,9 @@
-use error_stack::{report, Report};
+use chrono::{DateTime, Utc};
+use error_stack::{report, Report, Result, ResultExt};
 
 use crate::Error;
 
-pub use self::rust::{SLTrigger, StopLoss, TimeInForce};
+pub use self::rust::{SLTrigger, StopLoss, TimeInForce, TrailingStopLoss};
 
 // Builder / rust side
 mod rust {
@@ -56,8 +57,32 @@ mod rust {
         #[builder(default, setter(strip_option))]
         pub client_extensions: Option<ClientExtensions>,
     }
+
+    #[serde_as]
+    #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, TypedBuilder)]
+    #[serde(
+        rename_all = "camelCase",
+        into = "super::oanda::StopLoss",
+        try_from = "super::oanda::StopLoss"
+    )]
+    #[doc()]
+    pub struct TrailingStopLoss {
+        /// The distance (in price units) from the Trade’s fill price that the
+        /// Trailing Stop Loss Order will be triggered at.
+        pub distance: f32,
+
+        /// The time in force for the created Stop Loss Order. This may only be GTC,
+        /// GTD or GFD.
+        #[builder(default)]
+        pub time_in_force: TimeInForce,
+
+        /// The Client Extensions to add to the Stop Loss Order when created.
+        #[builder(default, setter(strip_option))]
+        pub client_extensions: Option<ClientExtensions>,
+    }
 }
 
+/// Convert a rust stop loss representation into an oand API stoploss
 impl From<rust::StopLoss> for oanda::StopLoss {
     fn from(stop_loss: rust::StopLoss) -> Self {
         let (price, distance) = match stop_loss.trigger {
@@ -79,10 +104,25 @@ impl From<rust::StopLoss> for oanda::StopLoss {
     }
 }
 
+fn read_json_time_in_force(
+    time_in_force: oanda::TimeInForce,
+    gtd_time: Option<DateTime<Utc>>,
+) -> Result<rust::TimeInForce, Error> {
+    match (time_in_force, gtd_time) {
+        (oanda::TimeInForce::Gtc, _) => Ok(rust::TimeInForce::Gtc),
+        (oanda::TimeInForce::Gtd, Some(gtd_time)) => Ok(rust::TimeInForce::Gtd(gtd_time)),
+        (oanda::TimeInForce::Gtd, None) => Err(report!(Error::JsonConversion)),
+        (oanda::TimeInForce::Gfd, _) => Ok(rust::TimeInForce::Gfd),
+    }
+}
+
 impl TryFrom<oanda::StopLoss> for rust::StopLoss {
     type Error = Report<Error>;
 
-    fn try_from(input: oanda::StopLoss) -> Result<Self, Report<Error>> {
+    /// Tries to convert an oanda stop-loss into a rust stop loss.
+    /// Returns an error if any logic is broken. For example if there is
+    /// not exactly one of `price` and `distance`
+    fn try_from(input: oanda::StopLoss) -> Result<Self, Error> {
         let trigger = match (input.price, input.distance) {
             (None, None) => {
                 return Err(report!(Error::JsonConversion).attach_printable(format!(
@@ -97,15 +137,49 @@ impl TryFrom<oanda::StopLoss> for rust::StopLoss {
                 )))
             }
         };
-        let time_in_force = match (input.time_in_force, input.gtd_time) {
-            (oanda::TimeInForce::Gtc, _) => rust::TimeInForce::Gtc,
-            (oanda::TimeInForce::Gtd, Some(gtd_time)) => rust::TimeInForce::Gtd(gtd_time),
-            (oanda::TimeInForce::Gtd, None) => return Err(report!(Error::JsonConversion)
-                .attach_printable(format!("Incoming StopLoss had time in force as good til date, but didn't provide a date: {input:#?}"))),
-            (oanda::TimeInForce::Gfd, _) => rust::TimeInForce::Gfd,
-        };
+        let time_in_force = read_json_time_in_force(input.time_in_force, input.gtd_time)
+                .attach_printable(format!("Incoming StopLoss had time in force as good til date, but didn't provide a date: {input:#?}"))?;
         Ok(Self {
             trigger,
+            time_in_force,
+            client_extensions: input.client_extensions,
+        })
+    }
+}
+
+/// Convert a rust trailing  stop loss representation into an oand API stoploss
+impl From<rust::TrailingStopLoss> for oanda::StopLoss {
+    fn from(stop_loss: rust::TrailingStopLoss) -> Self {
+        let (time_in_force, gtd_time) = match stop_loss.time_in_force {
+            TimeInForce::Gtc => (oanda::TimeInForce::Gtc, None),
+            TimeInForce::Gtd(date) => (oanda::TimeInForce::Gtd, Some(date)),
+            TimeInForce::Gfd => (oanda::TimeInForce::Gfd, None),
+        };
+        Self {
+            price: None,
+            distance: Some(stop_loss.distance),
+            gtd_time,
+            time_in_force,
+            client_extensions: stop_loss.client_extensions,
+        }
+    }
+}
+
+impl TryFrom<oanda::StopLoss> for rust::TrailingStopLoss {
+    type Error = Report<Error>;
+
+    /// Tries to convert an oanda stop-loss into a rust stop loss.
+    /// Returns an error if any logic is broken. For example if there is
+    /// not exactly one of `price` and `distance`
+    fn try_from(input: oanda::StopLoss) -> Result<Self, Error> {
+        let Some(distance)  = input.distance else {
+            return Err(report!(Error::JsonConversion))
+            .attach_printable(format!("Incoming training stop loss doesn't have a distance"))
+        };
+        let time_in_force = read_json_time_in_force(input.time_in_force, input.gtd_time)
+                .attach_printable(format!("Incoming TrailingStopLoss had time in force as good til date, but didn't provide a date: {input:#?}"))?;
+        Ok(Self {
+            distance,
             time_in_force,
             client_extensions: input.client_extensions,
         })

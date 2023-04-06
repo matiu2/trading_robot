@@ -3,6 +3,7 @@ pub mod candle;
 pub mod date_time;
 pub mod instrument;
 pub mod order;
+pub mod pricing;
 pub mod trade;
 pub mod transaction;
 

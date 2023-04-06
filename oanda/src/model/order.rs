@@ -1,9 +1,10 @@
 use crate::model::trade::{ClientExtensions, TimeInForce};
-use crate::model::transaction::StopLoss;
+use crate::model::transaction::{OrderFillTransaction, StopLoss};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
+use super::transaction::{Transaction, TransactionType};
 use super::{trade::MarketOrderTimeInForce, transaction::TakeProfitDetails};
 
 /// Order structure
@@ -126,7 +127,7 @@ pub enum OrderType {
 }
 
 /// Enum representing the behavior for filling an order.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum OrderPositionFill {
     /// When the Order is filled, only allow Positions to be opened or extended.
@@ -137,5 +138,165 @@ pub enum OrderPositionFill {
     ReduceOnly,
     /// When the Order is filled, use REDUCE_FIRST behaviour for non-client hedging Accounts,
     /// and OPEN_ONLY behaviour for client hedging Accounts.
+    #[default]
     Default,
+}
+
+pub enum OrderResponse {
+    /// Order was created (201)
+    Created(OrderGoodResponse),
+    /// Order specification was invalid
+    BadSpec(OrderFailedResponse),
+    /// Order or Account not found
+    NotFound(OrderFailedResponse),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderGoodResponse {
+    /// The Transaction that created the Order specified by the request.
+    order_create_transaction: Transaction,
+
+    /// The Transaction that filled the newly created Order. Only provided when
+    /// the Order was immediately filled.
+    #[serde(rename = "orderFillTransaction")]
+    order_fill_transaction: OrderFillTransaction,
+
+    /// The Transaction that cancelled the newly created Order. Only provided
+    /// when the Order was immediately cancelled.
+    #[serde(rename = "orderCancelTransaction")]
+    order_cancel_transaction: OrderCancelTransaction,
+
+    /// The Transaction that reissues the Order. Only provided when the Order is
+    /// configured to be reissued for its remaining units after a partial fill
+    /// and the reissue was successful.
+    #[serde(rename = "orderReissueTransaction")]
+    order_reissue_transaction: Transaction,
+
+    /// The Transaction that rejects the reissue of the Order. Only provided when
+    /// the Order is configured to be reissued for its remaining units after a
+    /// partial fill and the reissue was rejected.
+    #[serde(rename = "orderReissueRejectTransaction")]
+    order_reissue_reject_transaction: Transaction,
+
+    /// The IDs of all Transactions that were created while satisfying the
+    /// request.
+    #[serde(rename = "relatedTransactionIDs")]
+    related_transaction_ids: Vec<String>,
+
+    /// The ID of the most recent Transaction created for the Account
+    #[serde(rename = "lastTransactionID")]
+    last_transaction_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct OrderFailedResponse {
+    /// The Transaction that rejected the creation of the Order as requested
+    #[serde(rename = "orderRejectTransaction")]
+    order_reject_transaction: Transaction,
+
+    /// The IDs of all Transactions that were created while satisfying the
+    /// request.
+    #[serde(rename = "relatedTransactionIDs")]
+    related_transaction_ids: Vec<String>,
+
+    /// The ID of the most recent Transaction created for the Account
+    #[serde(rename = "lastTransactionID")]
+    last_transaction_id: String,
+
+    /// The code of the error that has occurred. This field may not be returned
+    /// for some errors.
+    error_code: Option<String>,
+
+    /// The human-readable description of the error that has occurred.
+    error_message: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum OrderFillReason {
+    /// The Order filled was a Limit Order
+    LimitOrder,
+
+    /// The Order filled was a Stop Order
+    StopOrder,
+
+    /// The Order filled was a Market-if-touched Order
+    MarketIfTouchedOrder,
+
+    /// The Order filled was a Take Profit Order
+    TakeProfitOrder,
+
+    /// The Order filled was a Stop Loss Order
+    StopLossOrder,
+
+    /// The Order filled was a Guaranteed Stop Loss Order
+    GuaranteedStopLossOrder,
+
+    /// The Order filled was a Trailing Stop Loss Order
+    TrailingStopLossOrder,
+
+    /// The Order filled was a Market Order
+    MarketOrder,
+
+    /// The Order filled was a Market Order used to explicitly close a Trade
+    MarketOrderTradeClose,
+
+    /// The Order filled was a Market Order used to explicitly close a Position
+    MarketOrderPositionCloseout,
+
+    /// The Order filled was a Market Order used for a Margin Closeout
+    MarketOrderMarginCloseout,
+
+    /// The Order filled was a Market Order used for a delayed Trade close
+    MarketOrderDelayedTradeClose,
+
+    /// The Order filled was a Fixed Price Order
+    FixedPriceOrder,
+
+    /// The Order filled was a Fixed Price Order created as part of a platform account migration
+    FixedPriceOrderPlatformAccountMigration,
+
+    /// The Order filled was a Fixed Price Order created to close a Trade as part of division account migration
+    FixedPriceOrderDivisionAccountMigration,
+
+    /// The Order filled was a Fixed Price Order created to close a Trade administratively
+    FixedPriceOrderAdministrativeAction,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+pub struct OrderCancelTransaction {
+    /// The Transaction’s Identifier.
+    pub id: String,
+
+    /// The date/time when the Transaction was created.
+    pub time: DateTime<Utc>,
+
+    /// The ID of the user that initiated the creation of the Transaction.
+    pub user_id: i64,
+
+    /// The ID of the Account the Transaction was created for.
+    pub account_id: String,
+
+    /// The ID of the “batch” that the Transaction belongs to.
+    pub batch_id: String,
+
+    /// The Request ID of the request which generated the transaction.
+    pub request_id: String,
+
+    /// The Type of the Transaction. Always set to “ORDER_CANCEL” for an OrderCancelTransaction.
+    #[serde(rename = "type")]
+    pub transaction_type: TransactionType,
+
+    /// The ID of the Order cancelled.
+    pub order_id: String,
+
+    /// The client ID of the Order cancelled (only provided if the Order has a client Order ID).
+    pub client_order_id: Option<String>,
+
+    /// The reason that the Order was cancelled.
+    pub reason: OrderCancelReason,
+
+    /// The ID of the Order that replaced this Order (only provided if this Order was cancelled for replacement).
+    pub replaced_by_order_id: Option<String>,
 }
