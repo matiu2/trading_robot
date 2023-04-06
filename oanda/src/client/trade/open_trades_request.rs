@@ -1,16 +1,14 @@
 use self::model::{date_time::DateTimeFormat, trade::TradesResponse};
 use super::Trade;
 use crate::Error;
-use error_stack::{IntoReport, Result, ResultExt};
-use serde::Serialize;
+use error_stack::{Result, ResultExt};
 use tracing::debug;
 use typed_builder::TypedBuilder;
 
 pub use crate::model;
 
-#[derive(Debug, Serialize, TypedBuilder)]
+#[derive(Debug, TypedBuilder)]
 pub struct OpenTradesRequest<'a> {
-    #[serde(skip)]
     trade_endpoint: &'a Trade<'a>,
     #[builder(default)]
     accept_date_time_format: DateTimeFormat,
@@ -20,7 +18,7 @@ impl<'a> OpenTradesRequest<'a> {
     pub async fn send(&self) -> Result<TradesResponse, Error> {
         let path = format!("/v3/accounts/{}/openTrades", self.trade_endpoint.account_id);
         let url = self.trade_endpoint.client.url(&path);
-        let request = self.trade_endpoint.client.start_get(&url).query(self);
+        let request = self.trade_endpoint.client.start_get(&url);
         debug!("Get open trades request: {request:#?}");
         let request = self.trade_endpoint.client.start_get(&url).header(
             "Accept-Datetime-Format",
