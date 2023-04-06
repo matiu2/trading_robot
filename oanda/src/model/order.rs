@@ -300,3 +300,61 @@ pub struct OrderCancelTransaction {
     /// The ID of the Order that replaced this Order (only provided if this Order was cancelled for replacement).
     pub replaced_by_order_id: Option<String>,
 }
+
+
+use serde::{Deserialize, Serialize};
+
+/// Enum representing reasons for order cancellation.
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum OrderCancelReason {
+    /// The Order was cancelled because at the time of filling, an unexpected internal server error occurred.
+    InternalServerError,
+    /// The Order was cancelled because at the time of filling the account was locked.
+    AccountLocked,
+    /// The order was to be filled, however the account is configured to not allow new positions to be created.
+    AccountNewPositionsLocked,
+    /// Filling the Order wasn’t possible because it required the creation of a dependent Order and the Account is locked for Order creation.
+    AccountOrderCreationLocked,
+    /// Filling the Order was not possible because the Account is locked for filling Orders.
+    AccountOrderFillLocked,
+    /// The Order was cancelled explicitly at the request of the client.
+    ClientRequest,
+    /// The Order cancelled because it is being migrated to another account.
+    Migration,
+    /// Filling the Order wasn’t possible because the Order’s instrument was halted.
+    MarketHalted,
+    /// The Order is linked to an open Trade that was closed.
+    LinkedTradeClosed,
+    /// The time in force specified for this order has passed.
+    TimeInForceExpired,
+    /// Filling the Order wasn’t possible because the Account had insufficient margin.
+    InsufficientMargin,
+    /// Filling the Order would have resulted in a a FIFO violation.
+    FifoViolation,
+    /// Filling the Order would have violated the Order’s price bound.
+    BoundsViolation,
+    /// The Order was cancelled for replacement at the request of the client.
+    ClientRequestReplaced,
+    /// The Order was cancelled for replacement with an adjusted fillPrice to accommodate for the price movement caused by a dividendAdjustment.
+    DividendAdjustmentReplaced,
+    /// Filling the Order wasn’t possible because enough liquidity available.
+    InsufficientLiquidity,
+    /// Filling the Order would have resulted in the creation of a Take Profit Order with a GTD time in the past.
+    TakeProfitOnFillGtdTimestampInPast,
+    /// Filling the Order would result in the creation of a Take Profit Order that would have been filled immediately, closing the new Trade at a loss.
+    TakeProfitOnFillLoss,
+    /// Filling the Order would result in the creation of a Take Profit Loss Order that would close the new Trade at a loss when filled.
+    LosingTakeProfit,
+    /// Filling the Order would have resulted in the creation of a Stop Loss Order with a GTD time in the past.
+    StopLossOnFillGtdTimestampInPast,
+    /// Filling the Order would result in the creation of a Stop Loss Order that would have been filled immediately, closing the new Trade at a loss.
+    StopLossOnFillLoss,
+    /// Filling the Order would result in the creation of a Stop Loss Order whose price would be zero or negative due to the specified distance.
+    StopLossOnFillPriceDistanceMaximumExceeded,
+    /// Filling the Order would not result in the creation of Stop Loss Order, however the Account’s configuration requires that all Trades have a Stop Loss Order attached to them.
+    StopLossOnFillRequired,
+    /// Filling the Order would not result in the creation of a guaranteed Stop Loss Order, however the Account’s configuration requires that all Trades have a guaranteed Stop Loss Order attached to them.
+    StopLossOnFillGuaranteedRequired,
+    todo!("more fields")
+}
