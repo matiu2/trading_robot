@@ -21,8 +21,8 @@ impl<'a> OpenTradesRequest<'a> {
         let request = self.trade_endpoint.client.start_get(&url);
         debug!("Get open trades request: {request:#?}");
         let request = self.trade_endpoint.client.start_get(&url).header(
-            "Accept-Datetime-Format",
-            self.accept_date_time_format.to_string(),
+            self.accept_date_time_format.header_name(),
+            self.accept_date_time_format.header_value(),
         );
         self.trade_endpoint
             .client
@@ -34,34 +34,10 @@ impl<'a> OpenTradesRequest<'a> {
 
 #[cfg(test)]
 mod api_tests {
+    use super::super::test_utils::get_account_id;
     use crate::model::date_time::DateTimeFormat;
-    use crate::{Client, Error};
-    use error_stack::{IntoReport, Result, ResultExt};
-    use lazy_static::lazy_static;
+    use crate::Client;
     use std::env::var;
-    use std::sync::Mutex;
-
-    lazy_static! {
-        static ref ACCOUNT_ID: Mutex<Option<String>> = Mutex::new(None);
-    }
-
-    async fn get_account_id(client: &Client) -> Result<String, Error> {
-        let mut account_id = ACCOUNT_ID.lock().unwrap();
-        if let Some(account_id) = account_id.as_ref() {
-            Ok(account_id.clone())
-        } else {
-            let accounts = client.accounts().list().await?;
-            let out = accounts
-                .into_iter()
-                .next()
-                .ok_or_else(|| Error::Other)
-                .into_report()
-                .attach_printable_lazy(|| "No oanda accounts found")?
-                .id;
-            *account_id = Some(out.clone());
-            Ok(out)
-        }
-    }
 
     #[tokio::test]
     async fn list_open_trades() {

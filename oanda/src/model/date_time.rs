@@ -47,3 +47,14 @@ pub enum DateTimeFormat {
     #[default]
     Rfc3339,
 }
+
+impl DateTimeFormat {
+    /// The name of the http header used to send to the oanda REST api
+    pub fn header_name(&self) -> &'static str {
+        "Accept-Datetime-Format"
+    }
+    /// The value of the header to send to oanda Rest API
+    pub fn header_value(&self) -> String {
+        self.to_string()
+    }
+}
